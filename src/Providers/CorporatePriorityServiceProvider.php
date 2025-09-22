@@ -1,11 +1,11 @@
 <?php
 
-namespace Amx\PackageBoilerplate\Providers;
+namespace Amx\CorporatePriority\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 
-class PackageServiceProvider extends ServiceProvider
+class CorporatePriorityServiceProvider extends ServiceProvider
 {
     public function boot()
     {
