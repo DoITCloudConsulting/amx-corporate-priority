@@ -20,64 +20,59 @@ class AeromexicoService
     {
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
 
-        try {
-            $token = $this->tokenService->get();
 
-            $client = new Client();
+        $token = $this->tokenService->get();
 
-            $uuid_v1 = Uuid::uuid1()->toString();
+        $client = new Client();
 
-            $response = $client->get($MS_RESERVATION, [
-                "headers" => [
-                    "channel" => "web",
-                    "pnr" => $data["pnr"],
-                    "lastName" => $data["lastname"],
-                    "ticket" => $data["ticketNumber"],
-                    "x-transactionId" => $uuid_v1,
-                    "platform" => "web",
-                    "workflow" => "ambusiness",
-                    "app-client" => "ecommerce",
-                    "Authorization" => "Bearer $token"
-                ]
-            ]);
+        $uuid_v1 = Uuid::uuid1()->toString();
 
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        $response = $client->get($MS_RESERVATION, [
+            "headers" => [
+                "channel" => "web",
+                "pnr" => $data["pnr"],
+                "lastName" => $data["lastname"],
+                "ticket" => $data["ticketNumber"],
+                "x-transactionId" => $uuid_v1,
+                "platform" => "web",
+                "workflow" => "ambusiness",
+                "app-client" => "ecommerce",
+                "Authorization" => "Bearer $token"
+            ]
+        ]);
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     public function getSeatMap($data)
     {
         $MS_SEAT_MAP = config("corporate-priority.MS_SEAT_MAP");
 
-        try {
-            $token = $this->tokenService->get();
 
-            $client = new Client();
+        $token = $this->tokenService->get();
 
-            $uuid_v1 = Uuid::uuid1()->toString();
+        $client = new Client();
 
-            $payload = $this->mapSeatMapData($data);
+        $uuid_v1 = Uuid::uuid1()->toString();
 
-            $response = $client->get($MS_SEAT_MAP, [
-                "headers" => [
-                    "channel" => "web",
-                    "flow" => "myb",
-                    "x-transactionId" => $uuid_v1,
-                    "store" => "mx",
-                    "platform" => "web",
-                    "workflow" => "ambusiness",
-                    "app-client" => "ecommerce",
-                    "Authorization" => "Bearer $token"
-                ],
-                "json" => $payload
-            ]);
+        $payload = $this->mapSeatMapData($data);
 
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+
+        $response = $client->post($MS_SEAT_MAP, [
+            "headers" => [
+                "channel" => "web",
+                "flow" => "myb",
+                "x-transactionId" => $uuid_v1,
+                "store" => "mx",
+                "platform" => "web",
+                "workflow" => "ambusiness",
+                "app-client" => "ecommerce",
+                "Authorization" => "Bearer $token"
+            ],
+            "json" => $payload
+        ]);
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     private function mapSeatMapData($data)
@@ -125,7 +120,7 @@ class AeromexicoService
 
             $uuid_v1 = Uuid::uuid1()->toString();
 
-            $payload = $this->mapSeatData($data);
+            $payload = $this->mapAssignSeatData($data);
 
             $response = $client->post($MS_SEAT, [
                 "headers" => [
@@ -147,7 +142,7 @@ class AeromexicoService
         }
     }
 
-    private function mapSeatData($data)
+    private function mapAssignSeatData($data)
     {
         return [
             "transactionDate" => $data["transactionDate"],
