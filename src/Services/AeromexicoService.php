@@ -2,6 +2,8 @@
 
 namespace Amx\CorporatePriority\Services;
 
+use Amx\CorporatePriority\Mappers\AssignSeatMapper;
+use Amx\CorporatePriority\Mappers\SeatMapMapper;
 use App\Services\Aeromexico\TokenService;
 use GuzzleHttp\Client;
 use Ramsey\Uuid\Uuid;
@@ -21,7 +23,7 @@ class AeromexicoService
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
 
 
-        $token = $this->tokenService->get();
+        $token = $this->tokenService->grantAccess();
 
         $client = new Client();
 
@@ -48,14 +50,13 @@ class AeromexicoService
     {
         $MS_SEAT_MAP = config("corporate-priority.MS_SEAT_MAP");
 
-
-        $token = $this->tokenService->get();
+        $token = $this->tokenService->grantAccess();
 
         $client = new Client();
 
         $uuid_v1 = Uuid::uuid1()->toString();
 
-        $payload = $this->mapSeatMapData($data);
+        $payload = SeatMapMapper::request($data);
 
 
         $response = $client->post($MS_SEAT_MAP, [
@@ -75,148 +76,76 @@ class AeromexicoService
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    private function mapSeatMapData($data)
-    {
-        return  [
-            "reservationCode" => $data["reservationCode"],
-            "isStandBy" => $data["isStandBy"],
-            "transactionDate" => $data["transactionDate"],
-            "legs" => [
-                [
-                    "legCode" => $data["legCode"],
-                    "legRegion" => $data["legRegion"],
-                    "windowLegStatus" => $data["windowLegStatus"],
-                    "segments" => [
-                        [
-                            "segmentCode" => $data["segmentCode"],
-                            "aircraftType" => $data["aircraftType"],
-                            "origin" => $data["origin"],
-                            "destination" => $data["destination"],
-                            "marketingCarrier" => $data["marketingCarrier"],
-                            "operatingCarrier" => $data["operatingCarrier"],
-                            "operatingFlightCode" => $data["operatingFlightCode"],
-                            "departureDate" => $data["departureDate"],
-                            "arrivalDate" => $data["arrivalDate"],
-                            "farebasis" => $data["farebasis"],
-                            "fareFamily" => $data["fareFamily"],
-                            "bookingClass" => $data["bookingClass"],
-                            "bookingCabin" => $data["bookingCabin"],
-                            "segmentRegion" => $data["segmentRegion"],
-                        ]
-                    ],
-                ]
-            ]
-        ];
-    }
 
     public function assignSeat($data)
     {
         $MS_SEAT = config("corporate-priority.MS_SEAT");
 
-        try {
-            $token = $this->tokenService->get();
+        $token = $this->tokenService->grantAccess();
 
-            $client = new Client();
+        $client = new Client();
 
-            $uuid_v1 = Uuid::uuid1()->toString();
+        $uuid_v1 = Uuid::uuid1()->toString();
 
-            $payload = $this->mapAssignSeatData($data);
+        $payload = AssignSeatMapper::request($data);
 
-            $response = $client->post($MS_SEAT, [
-                "headers" => [
-                    "channel" => "web",
-                    "flow" => "myb",
-                    "x-transactionId" => $uuid_v1,
-                    "store" => "mx",
-                    "platform" => "web",
-                    "workflow" => "ambusiness",
-                    "app-client" => "ecommerce",
-                    "Authorization" => "Bearer $token"
-                ],
-                "json" => $payload
-            ]);
+        $response = $client->post($MS_SEAT, [
+            "headers" => [
+                "channel" => "web",
+                "flow" => "myb",
+                "x-transactionId" => $uuid_v1,
+                "store" => "mx",
+                "platform" => "web",
+                "workflow" => "ambusiness",
+                "app-client" => "ecommerce",
+                "Authorization" => "Bearer $token"
+            ],
+            "json" => $payload
+        ]);
 
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        return json_decode($response->getBody()->getContents(), true);
     }
 
-    private function mapAssignSeatData($data)
+    public function eksToken()
     {
-        return [
-            "transactionDate" => $data["transactionDate"],
-            "isStandBy" => $data["isStandBy"],
-            "reservationCode" => $data["reservationCode"],
-            "passengers" => [
-                [
-                    "lastName" => $data["lastName"],
-                    "firstName" => $data["firstName"],
-                    "nameNumber" => $data["nameNumber"],
-                    "type" => $data["type"],
-                    "ffNumber" => $data["ffNumber"],
-                    "ffTierLevel" => $data["ffTierLevel"],
-                    "cobrandType" => $data["cobrandType"],
-                    "seats" => [
-                        [
-                            "id" => $data["seatId"],
-                            "seatCode" => $data["seatCode"],
-                            "isChangeSeat" => $data["isChangeSeat"],
-                            "seatCodeOld" => $data["seatCodeOld"],
-                            "segmentCode" => $data["segmentCode"],
-                            "isRedemptionCobrand" => $data["isRedemptionCobrand"],
-                            "isRedemptionTier" => $data["isRedemptionTier"],
-                            "isRedemptionCorporate" => $data["isRedemptionCorporate"],
-                            "emd" => $data["emd"],
-                            "status" => $data["status"],
-                            "currency" => [
-                                "currencyCode" => $data["currencyCode"],
-                                "base" => $data["base"],
-                                "taxes" => $data["taxes"],
-                                "total" => $data["total"],
-                            ],
-                            "redemptionType" => $data["redemptionType"],
-                        ]
-                    ],
-                    "ticketInfo" => [
-                        "eticket" => $data["eticket"],
-                        "coupons" => [
-                            [
-                                "couponNumber" => $data["couponNumber"],
-                                "couponStatus" => $data["couponStatus"],
-                                "segmentCode" => $data["couponSegmentCode"],
-                            ]
-                        ],
-                    ],
-                    "eticket" => $data["eticket"],
-                ]
+        $MS_EKS_CORPORATE_AUTH = config("corporate-priority.MS_EKS_AUTH");
+        $EKS_BASIC_TOKEN = config("corporate-priority.EKS_BASIC_TOKEN");
+        $EKS_SECRET = config("corporate-priority.EKS_SECRET");
+
+        $client = new Client();
+
+        $response = $client->post($MS_EKS_CORPORATE_AUTH, [
+            "headers" => [
+                "Authorization" => $EKS_BASIC_TOKEN,
+                "Content-Type" => "application/json"
             ],
-            "legs" => [
-                [
-                    "legCode" => $data["legCode"],
-                    "segments" => [
-                        [
-                            "segmentCode" => $data["segmentCode"],
-                            "aircraftType" => $data["aircraftType"],
-                            "origin" => $data["origin"],
-                            "destination" => $data["destination"],
-                            "marketingFlightCode" => $data["marketingFlightCode"],
-                            "marketingCarrier" => $data["marketingCarrier"],
-                            "operatingCarrier" => $data["operatingCarrier"],
-                            "operatingFlightCode" => $data["operatingFlightCode"],
-                            "departureDate" => $data["departureDate"],
-                            "arrivalDate" => $data["arrivalDate"],
-                            "farebasis" => $data["farebasis"],
-                            "fareFamily" => $data["fareFamily"],
-                            "bookingClass" => $data["bookingClass"],
-                            "cabinClass" => $data["cabinClass"],
-                            "bookingCabin" => $data["bookingCabin"],
-                            "segmentNumber" => $data["segmentNumber"],
-                        ]
-                    ],
-                ]
+            "json" => [
+                "apiName" => "eks-api-corporate",
+                "secret" => $EKS_SECRET
+            ]
+        ]);
+
+        return json_decode($response->getBody()->getContents(), true)["message"];
+    }
+
+    public function corporateBookings(string $rloc)
+    {
+        $MS_CORPORATE_PRIORITY = config("corporate-priority.MS_CORPORATE_PRIORITY");
+
+        $eks_token = $this->eksToken();
+
+        $client = new Client();
+
+        $response = $client->post($MS_CORPORATE_PRIORITY, [
+            "headers" => [
+                "Authorization" => "Bearer $eks_token",
+                "Content-Type" => "application/json"
             ],
-            "rollback" => $data["rollback"],
-        ];
+            "json" => [
+                "rloc" => $rloc
+            ]
+        ]);
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 }

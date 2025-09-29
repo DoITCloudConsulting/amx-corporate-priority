@@ -96,4 +96,45 @@ class CorporatePriorityController
 
         return response()->json($response);
     }
+
+    public function validateCorporate(Request $request)
+    {
+
+        try {
+            $data = $request->validate([
+                "pnr" => "required|string|min:6|max:6"
+            ]);
+
+            $response = $this->aeromexicoService->corporateBookings($data["pnr"]);
+
+            return response()->json($response);
+        } catch (RequestException $e) {
+
+            $message = $e->getResponse()->getReasonPhrase();
+            $body = json_decode($e->getResponse()->getBody(), true);
+            $statusCode = $e->getResponse()->getStatusCode();
+
+            return response()->json([
+                "message" => $message,
+                "body" => $body,
+            ], $statusCode);
+        } catch (\Throwable $th) {
+
+            $statusCode = method_exists($th, 'getStatusCode')
+                ? $th->getStatusCode()
+                : 500;
+
+
+            if ($th instanceof \Illuminate\Validation\ValidationException) {
+                return response()->json([
+                    'message' => $th->getMessage(),
+                    'errors' => $th->errors(),
+                ], 422);
+            }
+
+            return response()->json([
+                "message" => $th->getMessage()
+            ],  $statusCode);
+        }
+    }
 }
