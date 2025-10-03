@@ -4,7 +4,7 @@ namespace Amx\CorporatePriority\Mappers;
 
 class AssignSeatMapper
 {
-    static function request(array $data): array
+    static function request($data)
     {
         return [
             "transactionDate" => $data["transactionDate"],
@@ -12,68 +12,68 @@ class AssignSeatMapper
             "reservationCode" => $data["reservationCode"],
             "passengers" => [
                 [
-                    "lastName" => $data["lastName"],
-                    "firstName" => $data["firstName"],
-                    "nameNumber" => $data["nameNumber"],
-                    "type" => $data["type"],
-                    "ffNumber" => $data["ffNumber"],
-                    "ffTierLevel" => $data["ffTierLevel"],
-                    "cobrandType" => $data["cobrandType"],
+                    "lastName" => $data["passenger"]["lastName"],
+                    "firstName" => $data["passenger"]["firstName"],
+                    "nameNumber" => $data["passenger"]["nameNumber"],
+                    "type" => $data["passenger"]["type"],
+                    "ffNumber" => $data["passenger"]["ffNumber"] ?? "",
+                    "ffTierLevel" => $data["passenger"]["ffTierLevel"] ?? "",
+                    "cobrandType" => $data["passenger"]["cobrandType"] ?? "",
                     "seats" => [
                         [
-                            "id" => $data["seatId"],
-                            "seatCode" => $data["seatCode"],
-                            "isChangeSeat" => $data["isChangeSeat"],
-                            "seatCodeOld" => $data["seatCodeOld"],
-                            "segmentCode" => $data["segmentCode"],
-                            "isRedemptionCobrand" => $data["isRedemptionCobrand"],
-                            "isRedemptionTier" => $data["isRedemptionTier"],
-                            "isRedemptionCorporate" => $data["isRedemptionCorporate"],
-                            "emd" => $data["emd"],
-                            "status" => $data["status"],
+                            "id" => $data["seat"]["seatId"] ?? "",
+                            "seatCode" => $data["seat"]["seatCode"],
+                            "isChangeSeat" => $data["seat"]["isChangeSeat"],
+                            "seatCodeOld" => $data["seat"]["seatCodeOld"] ?? "",
+                            "segmentCode" => $data["seat"]["segmentCode"],
+                            "isRedemptionCobrand" => $data["seat"]["isRedemptionCobrand"],
+                            "isRedemptionTier" => $data["seat"]["isRedemptionTier"],
+                            "isRedemptionCorporate" => $data["seat"]["isRedemptionCorporate"],
+                            "emd" => $data["seat"]["emd"] ?? "",
+                            "status" => $data["seat"]["status"] ?? "",
                             "currency" => [
-                                "currencyCode" => $data["currencyCode"],
-                                "base" => $data["base"],
-                                "taxes" => $data["taxes"],
-                                "total" => $data["total"],
+                                "currencyCode" => $data["seat"]["currencyCode"],
+                                "base" => $data["seat"]["base"],
+                                "taxes" => $data["seat"]["taxes"],
+                                "total" => $data["seat"]["total"],
                             ],
-                            "redemptionType" => $data["redemptionType"],
+                            "redemptionType" => $data["seat"]["redemptionType"] ?? "",
                         ]
                     ],
                     "ticketInfo" => [
-                        "eticket" => $data["eticket"],
+                        "eticket" => $data["ticketNumber"],
                         "coupons" => [
                             [
-                                "couponNumber" => $data["couponNumber"],
-                                "couponStatus" => $data["couponStatus"],
-                                "segmentCode" => $data["couponSegmentCode"],
+                                "couponNumber" => $data["segment"]["coupon"],
+                                "couponStatus" => $data["segment"]["status"],
+                                "segmentCode" => $data["segment"]["segmentCode"],
                             ]
                         ],
                     ],
-                    "eticket" => $data["eticket"],
+                    "eticket" => $data["ticketNumber"],
                 ]
             ],
             "legs" => [
                 [
-                    "legCode" => $data["legCode"],
+                    "legCode" => $data["segment"]["legCode"],
                     "segments" => [
                         [
-                            "segmentCode" => $data["segmentCode"],
-                            "aircraftType" => $data["aircraftType"],
-                            "origin" => $data["origin"],
-                            "destination" => $data["destination"],
-                            "marketingFlightCode" => $data["marketingFlightCode"],
-                            "marketingCarrier" => $data["marketingCarrier"],
-                            "operatingCarrier" => $data["operatingCarrier"],
-                            "operatingFlightCode" => $data["operatingFlightCode"],
-                            "departureDate" => $data["departureDate"],
-                            "arrivalDate" => $data["arrivalDate"],
-                            "farebasis" => $data["farebasis"],
-                            "fareFamily" => $data["fareFamily"],
-                            "bookingClass" => $data["bookingClass"],
-                            "cabinClass" => $data["cabinClass"],
-                            "bookingCabin" => $data["bookingCabin"],
-                            "segmentNumber" => $data["segmentNumber"],
+                            "segmentCode" => $data["segment"]["segmentCode"],
+                            "aircraftType" => $data["segment"]["aircraftType"],
+                            "origin" => $data["segment"]["origin"],
+                            "destination" => $data["segment"]["destination"],
+                            "marketingFlightCode" => $data["segment"]["marketingFlightCode"],
+                            "marketingCarrier" => $data["segment"]["marketingCarrier"],
+                            "operatingCarrier" => $data["segment"]["operatingCarrier"],
+                            "operatingFlightCode" => $data["segment"]["operatingFlightCode"],
+                            "departureDate" => $data["segment"]["departureDate"],
+                            "arrivalDate" => $data["segment"]["arrivalDate"],
+                            "farebasis" => $data["segment"]["farebasis"],
+                            "fareFamily" => $data["segment"]["fareFamily"],
+                            "bookingClass" => $data["segment"]["bookingClass"],
+                            "cabinClass" => $data["segment"]["cabinClass"],
+                            "bookingCabin" => $data["segment"]["bookingCabin"],
+                            "segmentNumber" => $data["segment"]["segmentNumber"],
                         ]
                     ],
                 ]
