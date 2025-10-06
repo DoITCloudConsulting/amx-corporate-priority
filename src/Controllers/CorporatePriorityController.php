@@ -8,7 +8,7 @@ use Amx\CorporatePriority\Services\AeromexicoService;
 use Amx\CorporatePriority\Requests\SeatMapRequest;
 use Illuminate\Http\Request;
 use GuzzleHttp\Exception\RequestException;
-
+use Illuminate\Foundation\Http\FormRequest;
 
 class CorporatePriorityController
 {
@@ -90,11 +90,26 @@ class CorporatePriorityController
 
     public function assignSeat(AssignSeatRequest $request)
     {
-        $data = $request->validated();
+        try {
+            $response = $this->aeromexicoService->assignSeat($request->all());
+            return response()->json($response);
+        } catch (RequestException $e) {
 
-        $response = $this->aeromexicoService->assignSeat($data);
+            $message = $e->getResponse()->getReasonPhrase();
+            $body = json_decode($e->getResponse()->getBody(), true);
+            $statusCode = $e->getResponse()->getStatusCode();
 
-        return response()->json($response);
+            return response()->json([
+                "message" => $message,
+                "body" => $body,
+            ], $statusCode);
+        } catch (\Throwable $th) {
+
+            return response()->json([
+                "message" => $th->getMessage(),
+                "errors" => method_exists($th, 'errors') ? $th->errors() : null
+            ], 500);
+        }
     }
 
     public function validateCorporate(Request $request)
