@@ -118,7 +118,6 @@ class CorporatePriorityController
 
     public function validateCorporate(Request $request)
     {
-
         try {
             $data = $request->validate([
                 "pnr" => "required|string|min:6|max:6"

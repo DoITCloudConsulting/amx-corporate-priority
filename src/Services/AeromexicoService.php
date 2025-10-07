@@ -129,13 +129,13 @@ class AeromexicoService
 
     public function corporateBookings(string $rloc)
     {
-        $MS_CORPORATE_PRIORITY = config("corporate-priority.MS_CORPORATE_PRIORITY");
+        $MS_CORPORATE_VALIDATION = config("corporate-priority.MS_CORPORATE_VALIDATION");
 
         $eks_token = $this->eksToken();
 
         $client = new Client();
 
-        $response = $client->post($MS_CORPORATE_PRIORITY, [
+        $response = $client->post($MS_CORPORATE_VALIDATION, [
             "headers" => [
                 "Authorization" => "Bearer $eks_token",
                 "Content-Type" => "application/json"
