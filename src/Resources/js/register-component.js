@@ -10,8 +10,6 @@ export function registerPackageComponents() {
       .replace(".vue", "")
       .replace(/\//g, "/");
 
-    console.log("componentName", componentName);
-
     registeredComponents[`Amx/CorporatePriority/${componentName}`] =
       component.default;
   }
