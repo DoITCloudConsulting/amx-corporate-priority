@@ -1,10 +1,12 @@
 <script setup>
 import { BaseInput } from "am-ui-package/src";
 import { usePage } from "@inertiajs/vue3";
-const page = usePage();
-console.log(page.props);
+
+const props = defineProps(["user"]);
+console.log(props);
 </script>
 
 <template>
-  <BaseInput label="Brandobn" />
+  <h1>Prueba adiel</h1>
+  <BaseInput label="Brandon" />
 </template>

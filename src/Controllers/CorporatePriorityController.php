@@ -68,7 +68,11 @@ class CorporatePriorityController
         try {
             $response = $this->aeromexicoService->getSeatMap($request->all());
 
-            return response()->json($response);
+            $filter_data = array_values(array_filter($response["seatMap"], function ($seat) {
+                return $seat["type"] === "PREFERRED";
+            }));
+
+            return response()->json($filter_data);
         } catch (RequestException $e) {
 
             $message = $e->getResponse()->getReasonPhrase();

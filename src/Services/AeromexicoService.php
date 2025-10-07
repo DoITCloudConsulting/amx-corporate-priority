@@ -22,7 +22,6 @@ class AeromexicoService
     {
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
 
-
         $token = $this->tokenService->grantAccess();
 
         $client = new Client();
@@ -39,7 +38,7 @@ class AeromexicoService
                 "platform" => "web",
                 "workflow" => "ambusiness",
                 "app-client" => "ecommerce",
-                "Authorization" => "Bearer $token"
+                "Authorization" => $token
             ]
         ]);
 
