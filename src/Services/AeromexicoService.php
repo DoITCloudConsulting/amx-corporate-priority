@@ -147,4 +147,32 @@ class AeromexicoService
 
         return json_decode($response->getBody()->getContents(), true);
     }
+
+    public function preferredProcessBooking(string $pnr)
+    {
+        $MS_CONDONATE_SEATS_RESERVATION = config("corporate-priority.MS_CONDONATE_SEATS_RESERVATION");
+
+        $client = new Client();
+
+        $xmlBody = '<?xml version="1.0" encoding="UTF-8"?>
+        <cepMessage xmlns="http://www.sabre.com/asx/booking/epservicesV2">
+            <content>
+                <bookings xmlns="http://www.sabre.com/asx/booking">
+                    <booking>
+                        <rloc>' . $pnr . '</rloc>
+                    </booking>
+                </bookings>
+            </content>
+        </cepMessage>';
+
+        $response = $client->post($MS_CONDONATE_SEATS_RESERVATION, [
+            "headers" => [
+                "Content-Type" => "application/json"
+            ],
+            "body" => $xmlBody
+
+        ]);
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
 }
