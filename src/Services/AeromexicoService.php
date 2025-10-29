@@ -23,7 +23,7 @@ class AeromexicoService
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
 
         $token = $this->tokenService->grantAccess();
-
+        
         $client = new Client();
 
         $uuid_v1 = Uuid::uuid1()->toString();
@@ -132,7 +132,7 @@ class AeromexicoService
         $MS_CORPORATE_VALIDATION = config("corporate-priority.MS_CORPORATE_VALIDATION");
 
         $eks_token = $this->eksToken();
-
+        
         $client = new Client();
 
         $response = $client->post($MS_CORPORATE_VALIDATION, [

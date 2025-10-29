@@ -9,3 +9,11 @@ export async function fetchTicketStatus(data) {
 
     return response.data
 }
+
+export async function fetchCorporateValidation(data) {
+    const response = await axios.post(route('validate-corporate', {
+            pnr: data.pnr
+    }));
+
+    return response.data
+}
