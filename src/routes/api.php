@@ -9,3 +9,5 @@ Route::post('seat-map',                         [CorporatePriorityController::cl
 Route::post('assign-seat',                      [CorporatePriorityController::class, 'assignSeat'])->name("assign-seat");
 Route::post('validate/corporate-priority',      [CorporatePriorityController::class, 'validateCorporate'])->name("validate-corporate");
 Route::post('condonate-reservation',            [CorporatePriorityController::class, 'condonateReservation'])->name("condonate-seats");
+
+Route::post('case-creation',            [CorporatePriorityController::class, 'createCase'])->name("createCase");
