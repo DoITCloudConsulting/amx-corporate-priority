@@ -8,13 +8,11 @@ import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 
 async function validateResponse({ message, segments, data }, ticketForm) {
-  
-  // const t = (k) => getTranslation(k);
-  const t = (k) => k; // placeholder
-console.log('message:', message);
 
-  if (!data.clid) {
+  if (!data.customPassengerSegments.clid) {
     const response = await fetchCorporateValidation({ pnr: ticketForm.pnr });
+    console.log(response);
+    
     if (!response?.isCorporate) {
       const errorNotification = getTranslation("common.tools.error.pnr.not-corporate");
       // await trackError(ticketForm, errorNotification);
@@ -49,14 +47,14 @@ export async function getTicketStatus(ticketData) {
     const data = await fetchTicketStatus(ticketData);
     console.log(data)
     
-    // const { success, errorNotification } = await validateResponse(
-    //   { message: data.benefits.benefits_error, segments: data.customPassengerSegments.legs, data },
-    //   ticketData
-    // );
+    const { success, errorNotification } = await validateResponse(
+      { message: data.benefits.benefits_error, segments: data.customPassengerSegments.legs, data },
+      ticketData
+    );
 
-    // if (!success) {
-    //   return { validTicket: false, error: errorNotification };
-    // }
+    if (!success) {
+      return { validTicket: false, error: errorNotification };
+    }
 
     const ticket = {
       validTicket: true,
@@ -80,10 +78,8 @@ export async function getTicketStatus(ticketData) {
   } catch (error) {
     console.log(error);
 
-    // const t = (k) => getTranslation(k);
-    const t = (k) => k; // placeholder
-
     const code = error.response?.data?.body.errorCode;
+    const status = error.response?.data?.body.status;
     const detail = error.response?.data?.body.detail;
     
     if (detail == "400 Bad Request on GET request for \"https:\/\/amx-c-mtpsbk-de.amlab7.com\/tc\/reservation\/pnr\": \"{\"channel\":\"web\",\"reason\":\"ERR.TC.RESERVATION.LASTNAME_NOT_MATCH\",\"httpCode\":\"400\"}\"") {
@@ -92,6 +88,12 @@ export async function getTicketStatus(ticketData) {
       return { validTicket: false, error: errorNotification };
     }
 
+    if (status === 404) {
+      const errorNotification = getTranslation("Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.");
+      // await trackError(ticketData, errorNotification);
+      return { validTicket: false, error: errorNotification };
+    
+    }
     if (code === "57111303") {
       const errorNotification = getTranslation("common.tools.error.pnr.reservation-out-sync");
       // await trackError(ticketData, errorNotification);

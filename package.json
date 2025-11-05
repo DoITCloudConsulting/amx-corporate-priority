@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "am-ui-package": "^2.1.11",
+    "am-ui-package": "^2.3.0",
     "axios": "^1.12.2"
   }
 }
