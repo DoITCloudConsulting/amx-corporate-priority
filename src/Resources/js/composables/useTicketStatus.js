@@ -1,11 +1,15 @@
 // composables/useTicketStatus.js
 
 import { fetchTicketStatus, fetchCorporateValidation } from "../../services/TicketStatusService";
-import { getTranslation } from "@shared/getTranslation";
+// import { getTranslation } from "@shared/getTranslation";
 // import { useEventTracker } from "@/composable/useEventTracker";
 // import { useUserSessionStore } from "./useAuthUserStore";
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
+
+function getTranslation(key) {
+  return key
+}
 
 async function validateResponse({ message, segments, data }, ticketForm) {
 
