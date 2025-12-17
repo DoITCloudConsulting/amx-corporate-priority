@@ -1,20 +1,20 @@
 {
-    "name": "amx/package-boilerplate",
+    "name": "amx/corporate-priority",
     "type": "library",
     "require": {
         "php": "^8.2",
-        "inertiajs/inertia-laravel": "^2.0",
-        "laravel/framework": "^12.0"
+        "amx/salesforce": "@dev",
+        "laravel/framework": "^10.10 || ^11.0 || ^12.0"
     },
     "autoload": {
         "psr-4": {
-            "Amx\\PackageBoilerplate\\": "src/"
+            "Amx\\CorporatePriority\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Amx\\PackageBoilerplate\\Providers\\PackageServiceProvider"
+                "Amx\\CorporatePriority\\Providers\\CorporatePriorityServiceProvider"
             ]
         }
     },
@@ -32,5 +32,11 @@
             ".prettierignore",
             ".prettierrc"
         ]
-    }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "C:/Users/adiel/Desktop/Work/amx-salesforce"
+        }
+    ]
 }

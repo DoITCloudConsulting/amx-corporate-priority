@@ -1,17 +1,18 @@
 export function registerPackageComponents() {
-    const components = import.meta.glob('./Pages/**/*.vue', { eager: true });
+  const components = import.meta.glob("./Pages/**/*.vue", { eager: true });
 
-    const registeredComponents = {};
+  const registeredComponents = {};
 
-    for (const path in components) {
-        const component = components[path];
-        const componentName = path
-            .replace('./Pages/', '')
-            .replace('.vue', '')
-            .replace(/\//g, '/');
+  for (const path in components) {
+    const component = components[path];
+    const componentName = path
+      .replace("./Pages/", "")
+      .replace(".vue", "")
+      .replace(/\//g, "/");
 
-        registeredComponents[`Amx/PackageBoilerplate/${componentName}`] = component.default;
-    }
+    registeredComponents[`Amx/CorporatePriority/${componentName}`] =
+      component.default;
+  }
 
-    return registeredComponents;
+  return registeredComponents;
 }

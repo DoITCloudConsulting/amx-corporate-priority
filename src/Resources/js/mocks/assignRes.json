@@ -1,0 +1,24 @@
+[
+    {
+        "nameNumber": "01.01",
+        "seats": [
+            {
+                "seatCode": "11D",
+                "isChangeSeat": true,
+                "seatCodeOld": "9A",
+                "code": "0B5",
+                "segmentCode": "MEX_CUN_AM_0560_2025-12-01_2055",
+                "name": "ASIENTO PAGADO PAIDSEAT",
+                "group": "SA",
+                "segmentIndicator": "S",
+                "rfic": "A",
+                "ssrCode": "SEAT",
+                "emdType": "Associated",
+                "airExtraItemNumber": "25",
+                "owningCarrierCode": "AM",
+                "vendor": "ATP",
+                "redemptionType": ""
+            }
+        ]
+    }
+]
