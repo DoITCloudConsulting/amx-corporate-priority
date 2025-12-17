@@ -8,6 +8,7 @@ class AssignSeatMapper
     {
         return [
             "transactionDate" => $data["transactionDate"],
+            "requestFrom" => "FE",
             "isStandBy" => $data["isStandBy"],
             "reservationCode" => $data["reservationCode"],
             "passengers" => [
@@ -16,28 +17,32 @@ class AssignSeatMapper
                     "firstName" => $data["passenger"]["firstName"],
                     "nameNumber" => $data["passenger"]["nameNumber"],
                     "type" => $data["passenger"]["type"],
-                    "ffNumber" => $data["passenger"]["ffNumber"] ?? "",
-                    "ffTierLevel" => $data["passenger"]["ffTierLevel"] ?? "",
-                    "cobrandType" => $data["passenger"]["cobrandType"] ?? "",
+                    "beneficiaryTier" => "",
+                    "corporateAccount" => "",
+                    "ffNumber" => "",
+                    "ffTierLevel" => "",
+                    "cobrandType" => "",
                     "seats" => [
                         [
-                            "id" => $data["seat"]["seatId"] ?? "",
+                            "id" => $data["seat"]["id"] ?? "",
                             "seatCode" => $data["seat"]["seatCode"],
                             "isChangeSeat" => $data["seat"]["isChangeSeat"],
                             "seatCodeOld" => $data["seat"]["seatCodeOld"] ?? "",
                             "segmentCode" => $data["seat"]["segmentCode"],
-                            "isRedemptionCobrand" => $data["seat"]["isRedemptionCobrand"],
-                            "isRedemptionTier" => $data["seat"]["isRedemptionTier"],
-                            "isRedemptionCorporate" => $data["seat"]["isRedemptionCorporate"],
+                            "isRedemptionCobrand" => false,
+                            "isRedemptionTier" => false,
+                            "isRedemptionCorporate" => false,
                             "emd" => $data["seat"]["emd"] ?? "",
-                            "status" => $data["seat"]["status"] ?? "",
+                            "status" => "",
                             "currency" => [
                                 "currencyCode" => $data["seat"]["currencyCode"],
                                 "base" => $data["seat"]["base"],
                                 "taxes" => $data["seat"]["taxes"],
                                 "total" => $data["seat"]["total"],
                             ],
-                            "redemptionType" => $data["seat"]["redemptionType"] ?? "",
+                            "redemptionType" => "",
+                            "isRedemptionBeneficiaryTier" => false,
+                            "deleteProcess" => false
                         ]
                     ],
                     "ticketInfo" => [
@@ -55,9 +60,15 @@ class AssignSeatMapper
             ],
             "legs" => [
                 [
+                    "legEntity" => $data["segment"]["entity"],
+                    "remainingTimeToCheckin" => $data["segment"]["remainingTimeToCheckIn"],
                     "legCode" => $data["segment"]["legCode"],
                     "segments" => [
                         [
+                            "segmentEntity" => $data["segment"]["entity"],
+                            "remainingSegmentTimeToCheckin" => $data["segment"]["remainingTimeToCheckIn"],
+                            "departureAirportTimeZoneId" => "America/Mexico_City",
+                            "windowsCheckin" => false,
                             "segmentCode" => $data["segment"]["segmentCode"],
                             "aircraftType" => $data["segment"]["aircraftType"],
                             "origin" => $data["segment"]["origin"],

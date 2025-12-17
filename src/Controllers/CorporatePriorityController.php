@@ -41,13 +41,7 @@ class CorporatePriorityController
     public function getSeatMap(SeatMapRequest $request)
     {
         return $this->handleApiErrors(function () use ($request) {
-            $response = $this->aeromexicoService->getSeatMap($request->all());
-
-            $filter_data = array_values(array_filter($response["seatMap"], function ($seat) {
-                return $seat["type"] === "PREFERRED";
-            }));
-
-            return $filter_data;
+            return $this->aeromexicoService->getSeatMap($request->all());
         });
     }
 

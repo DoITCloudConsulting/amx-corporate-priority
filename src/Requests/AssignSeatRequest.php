@@ -27,10 +27,7 @@ class AssignSeatRequest extends FormRequest
             'passenger.lastName'                     => 'required|string',
             'passenger.firstName'                    => 'required|string',
             'passenger.nameNumber'                   => 'required|string',
-            'passenger.type'                         => 'required|string', // ejemplo de tipos
-            'passenger.ffNumber'                     => 'nullable|string',
-            'passenger.ffTierLevel'                  => 'nullable|string',
-            'passenger.cobrandType'                  => 'nullable|string',
+            'passenger.type'                         => 'required|string',
 
             'seat'                        => 'required|array|min:1',
             'seat.id'                     => 'nullable|string',
@@ -38,18 +35,15 @@ class AssignSeatRequest extends FormRequest
             'seat.isChangeSeat'           => 'required|boolean',
             'seat.seatCodeOld'            => 'nullable|string',
             'seat.segmentCode'            => 'required|string',
-            'seat.isRedemptionCobrand'    => 'required|boolean',
-            'seat.isRedemptionTier'       => 'required|boolean',
-            'seat.isRedemptionCorporate'  => 'required|boolean',
             'seat.emd'                    => 'nullable|string',
             'seat.status'                 => 'nullable|string',
             'seat.currencyCode'           => 'required|string',
             'seat.base'                   => 'required|numeric',
             'seat.taxes'                  => 'required|numeric',
             'seat.total'                  => 'required|numeric',
-            'seat.redemptionType'         => 'nullable|string',
 
-
+            'segment.entity'           => 'required|string',
+            'segment.remainingTimeToCheckIn' => 'required|integer',
             'segment.segmentCode'         => 'required|string',
             'segment.coupon'              => 'required|integer',
             'segment.status'              => 'required|string',

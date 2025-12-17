@@ -10,14 +10,13 @@ import {
   SeatsTicket,
   GeneralToast,
 } from "am-ui-package";
-import { ref, reactive, computed, watch } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
 import axios from "axios";
 // import { getTranslation } from '@shared/getTranslation'
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
-
-const page = usePage();
+import { corporatePriorityService } from "../../services/CorporatePriorityService";
+import CircleLoader from "../Components/CircleLoader.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
@@ -32,7 +31,7 @@ const clid = ref("");
 const notificationError = ref(false);
 const isToastOpen = ref(false);
 const allSeatsAssigned = ref(false);
-const isStandBy = ref()
+const isStandBy = ref();
 const ticketForm = ref({
   pnr: "",
   numberTicket: "",
@@ -42,8 +41,7 @@ const ticketForm = ref({
 const formatPassengerName = (p = {}) =>
   p.firstName && p.lastName
     ? `${capitalize(p.firstName)} ${capitalize(p.lastName)}`
-    : '';
-
+    : "";
 
 // const trads = {
 //   label_tool_name: getTranslation('tools.corporate.title'),
@@ -114,8 +112,9 @@ const formatPassengerName = (p = {}) =>
 // };
 
 const trads = {
-  label_tool_name: "Corportate Priority",
-  label_tool_description: "Aquí podras solicitar el waiver de asientos para tu reserva",
+  label_tool_name: "Corporate Priority",
+  label_tool_description:
+    "Aquí podras solicitar el waiver de asientos para tu reserva",
   label_need_help: "¿Necesitas ayuda",
   label_back: "Regresar",
   label_name: "Nombre",
@@ -139,15 +138,21 @@ const trads = {
   label_consulting: "Consultando",
   label_panel_title: "Información general",
   label_error: "Error",
-  label_no_benefit: "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.",
-  label_no_seats_available: "El segmento seleccionado no cuenta con asientos preferentes disponibles para otorgar el beneficio.",
-  label_1_panel: "El beneficiario solo es aplicable para asientos preferenciales.",
-  label_2_panel: "En caso de no contar con asientos preferentes disponibles no es posible otorgar el beneficio.",
+  label_no_benefit:
+    "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.",
+  label_no_seats_available:
+    "El segmento seleccionado no cuenta con asientos preferentes disponibles para otorgar el beneficio.",
+  label_1_panel:
+    "El beneficiario solo es aplicable para asientos preferenciales.",
+  label_2_panel:
+    "En caso de no contar con asientos preferentes disponibles no es posible otorgar el beneficio.",
   label_3_panel: "Cualquier uso indebido este sujeto a débito.",
-  label_4_panel: "Si cuentas con un asiento pagado previamente no se realizará ningún reembolso por este medio.",
+  label_4_panel:
+    "Si cuentas con un asiento pagado previamente no se realizará ningún reembolso por este medio.",
   label_found_first: "Se encuentran ",
   label_found_last: " en esta reservación.",
-  label_empty_top: "Aquí podrá visualizar los boletos relacionados a su reservación",
+  label_empty_top:
+    "Aquí podrá visualizar los boletos relacionados a su reservación",
   label_no_reservations: "No hay reservaciones registradas.",
   label_check_all: "Seleccionar todos",
   label_tickets: "boletos",
@@ -166,13 +171,21 @@ const trads = {
   label_save: "Guardar y salir",
   label_no_seat: "Sin asiento",
   label_select_segment: "Selecciona asiento para este pasajero",
-  label_success_toast: "El beneficio de Corporate Priority se otorgó de forma exitosa",
+  label_success_toast:
+    "El beneficio de Corporate Priority se otorgó de forma exitosa",
   label_invalid_pnr: "PNR inválido",
   label_invalid_ticket_number: "Número de boleto inválido",
   label_invalid_value: "Valor inválido",
-  label_seat_no_preferent: "El asiento asignado no es aplicable para el beneficio ¿Necesitas cambiar el asiento?",
-  labe_current_preferred: "Tu reservación ya cuenta con el beneficio de asientos preferentes, ¿Necesitas cambiar el asiento?",
-  label_seat_is_preferent: "Ya cuentas con un asiento preferente asignado ¿Necesitas cambiar el asiento?",
+  label_condonate: "Condonar",
+  label_seat_condonate: "Desea condonar el asiento",
+  label_seat_yes_condonate: "Si condonar",
+  label_seat_no_condonate: "No condonar",
+  label_seat_no_preferent:
+    "El asiento asignado no es aplicable para el beneficio ¿Necesitas cambiar el asiento?",
+  labe_current_preferred:
+    "Tu reservación ya cuenta con el beneficio de asientos preferentes, ¿Necesitas cambiar el asiento?",
+  label_seat_is_preferent:
+    "Ya cuentas con un asiento preferente asignado ¿Necesitas cambiar el asiento?",
   label_price: "Costo",
   label_window: "Ventana",
   label_aisle: "Pasillo",
@@ -180,7 +193,6 @@ const trads = {
   label_agree_terms: "Acepta los términos y condiciones de cambiar el asiento",
   label_change_success: "Se ha realizado de manera exitosa el cambio.",
 };
-
 
 const alert = (message) => {
   window.alert(message);
@@ -193,31 +205,40 @@ const sendForm = async () => {
   try {
     const res = await getTicketStatus(ticketForm.value);
     if (!res?.validTicket) {
-      notificationError.value = res?.error || 'No fue posible validar el ticket.';
+      notificationError.value =
+        res?.error || "No fue posible validar el ticket.";
       return;
     }
-    console.log(res);
-    
-    passenger.value = {
-      ...res.passenger,
-      formatedName: formatPassengerName(res.passenger),
-    };
-    legs.value = res.segments ?? [];
-    isStandBy.value = !!res.isStandBy;
-    stationNumber.value = res.stationNumber;
-    clid.value = res.clid;
 
-    segments.value = legs.value.flatMap((leg, i) =>
-      (leg.segments ?? []).map(seg => ({ ...seg, legCode: leg.legCode, legIndex: i }))
-    );
+    updateReservation(res);
 
     segments.value.forEach(ensureSeatMap);
-
   } catch (err) {
-    notificationError.value = err?.response?.data?.message || err?.message || 'Error inesperado.';
+    notificationError.value =
+      err?.response?.data?.message || err?.message || "Error inesperado.";
   } finally {
     isLoading.value = false;
   }
+};
+
+const updateReservation = (reservation) => {
+  passenger.value = {
+    ...reservation.passenger,
+    formatedName: formatPassengerName(reservation.passenger),
+  };
+  legs.value = reservation.segments ?? [];
+  isStandBy.value = reservation.isStandBy;
+  stationNumber.value = reservation.stationNumber;
+  clid.value = reservation.clid;
+
+  segments.value = legs.value.flatMap((leg, i) =>
+    (leg.segments ?? []).map((seg) => ({
+      ...seg,
+      legCode: leg.legCode,
+      legIndex: i,
+      legEntity: leg.legEntity,
+    }))
+  );
 };
 
 const handleAssignSeats = async () => {
@@ -226,122 +247,32 @@ const handleAssignSeats = async () => {
     .filter(({ seg }) => !!seg.newSeat);
 
   if (!toAssign.length) {
-    console.log('No hay segmentos con newSeat para asignar.');
+    console.log("No hay segmentos con newSeat para asignar.");
     return;
   }
   notificationError.value = false;
 
   const now = new Date();
-  const formatted = now.getFullYear() + '-' +
-  String(now.getMonth() + 1).padStart(2, '0') + '-' +
-  String(now.getDate()).padStart(2, '0') + 'T' +
-  String(now.getHours()).padStart(2, '0') + ':' +
-  String(now.getMinutes()).padStart(2, '0') + ':' +
-  String(now.getSeconds()).padStart(2, '0');
+  const formatted =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0") +
+    "T" +
+    String(now.getHours()).padStart(2, "0") +
+    ":" +
+    String(now.getMinutes()).padStart(2, "0") +
+    ":" +
+    String(now.getSeconds()).padStart(2, "0");
 
   let anySuccess = false;
   console.log(toAssign);
-  
-  for (const { seg, idx } of toAssign) {
-    try {
-      const seatCode = seg.newSeat?.seatCode;
-      if (!seatCode) {
-        const updatedErr = { ...seg, assignError: 'newSeat sin seatCode' };
-        segments.value.splice(idx, 1, updatedErr);
-        continue;
-      }
 
-      const payload = {
-        transactionDate: formatted,
-        ticketNumber: ticketForm.value.numberTicket,
-        isStandBy: !!isStandBy.value,
-        reservationCode: ticketForm.value.pnr,
-        passenger: {
-          firstName: passenger.value.firstName,
-          lastName: passenger.value.lastName,
-          nameNumber: passenger.value.nameId,
-          type: passenger.value.type,
-          ffNumber: passenger.value.ffNumber,
-          ffTierLevel: passenger.value.ffTierLevel,
-          cobrandType: passenger.value.cobrandType,
-        },
-        seat: {
-            seatId: seg.seats.length ? seg.seats[0].id : '',
-            seatCode: seg.newSeat.seatCode,
-            isChangeSeat: seg.seats.length ? true : false,
-            seatCodeOld: seg.seats.length ? seg.seats[0].seatCode : '',
-            segmentCode: seg.segmentCode,
-            isRedemptionCobrand: seg.seats.length ? seg.seats[0].isRedemptionCobrand : false,
-            isRedemptionTier: seg.seats.length ? seg.seats[0].isRedemptionTier : false,
-            isRedemptionCorporate: seg.seats.length ? seg.seats[0].isRedemptionCorporate : false,
-            emd: seg.seats.length ? seg.seats[0].emd : '',
-            status: seg.seats.length ? seg.seats[0].status : '',
-            currencyCode: seg.newSeat.currency.currencyCode,
-            base: seg.newSeat.currency.base,
-            taxes: seg.newSeat.currency.taxes,
-            total: seg.newSeat.currency.total,
-            redemptionType: '',
-        },
-        segment: {
-          coupon: seg.coupon,
-          couponNumber: seg.coupon,
-          couponStatus: seg.status,
-          segmentCode: seg.segmentCode,
-          legCode: seg.legCode,
-          aircraftType: seg.aircraftType,
-          origin: seg.startLocation,
-          destination: seg.endLocation,
-          marketingFlightCode: seg.flightNumber,
-          marketingCarrier: seg.marketingCarrier,
-          operatingCarrier: seg.operatingCarrier,
-          operatingFlightCode: seg.flightNumber,
-          departureDate: seg.departureDateTime,
-          arrivalDate: seg.arrivalDateTime,
-          farebasis: seg.farebasis,
-          fareFamily: seg.fareFamily,
-          bookingClass: seg.bookingClass,
-          cabinClass: seg.cabinClass,
-          bookingCabin: seg.bookingCabin,
-          segmentNumber: String(seg.segmentNumber),
-          status: seg.status
-        },
-        rollback: false,
-      };
+  const seatAssignPayload =
+    corporatePriorityService.prepareSeatAssignmentPayload();
 
-      // petición (await para encolar secuencialmente)
-      const { data } = await axios.post(route('assign-seat'), payload);
-      
-      if (data.emdType !== "Associated") {
-        errorModal.value = true;
-        break;
-      } else {
-        const updatedSeg = {
-          ...seg,
-          seats: [seg.newSeat],
-          success: true,
-        };
-        segments.value.splice(idx, 1, updatedSeg);
-  
-        console.log(segments.value);
-        continue
-      }
-
-      // pequeña pausa opcional (alivia backend)
-      // await new Promise(r => setTimeout(r, 150));
-    } catch (err) {
-      console.error('assign-seat error for segment', seg.segmentCode ?? idx, err);
-      const message = err?.response?.data?.message || err?.message || 'Error al asignar asiento';
-      segments.value.splice(idx, 1, updatedSeg);
-    }
-  }
-
-  if (anySuccess) {
-    // const { data } = await axios.post('condonate', payload);
-    allSeatsAssigned.value = true;
-  } else {
-    // ningún éxito: muestra notificación de error genérico (opcional)
-    notificationError.value = notificationError.value || 'No se pudo asignar ningún asiento.';
-  }
+  const response = await corporatePriorityService.assignSeat(seatAssignPayload);
 };
 
 const selectedIds = ref(new Set());
@@ -361,21 +292,23 @@ const handleToggle = (segment, checked) => {
 };
 
 const handleToggleAll = (val) => {
-  selectedIds.value = val ? new Set(segments.value.map(s => segKey(s))) : new Set();
+  selectedIds.value = val
+    ? new Set(segments.value.map((s) => segKey(s)))
+    : new Set();
   console.log(legsToMap.value);
-  
 };
 
 const seatMapCache = reactive({});
 const seatMapStatus = reactive({});
+let seatMapPayload = reactive({});
 
 const buildSeatMapPayload = (seg) => ({
   reservationCode: ticketForm.value.pnr,
   isStandBy: !!isStandBy.value,
-  transactionDate: new Date().toISOString().slice(0,19),
+  transactionDate: new Date().toISOString().slice(0, 19),
   legCode: seg.legCode,
   legRegion: seg.segmentRegion ?? null,
-  windowLegStatus: 'MYB',
+  windowLegStatus: "MYB",
   segmentCode: seg.segmentCode,
   aircraftType: seg.aircraftType,
   origin: seg.startLocation,
@@ -385,32 +318,45 @@ const buildSeatMapPayload = (seg) => ({
   operatingFlightCode: seg.flightNumber,
   departureDate: seg.departureDateTime,
   arrivalDate: seg.arrivalDateTime,
-  farebasis: (seg.farebasis || '').split('/')[0] || null,
+  farebasis: (seg.farebasis || "").split("/")[0] || null,
   fareFamily: seg.fareFamily,
   bookingClass: seg.bookingClass,
   bookingCabin: seg.bookingCabin,
   segmentRegion: seg.segmentRegion ?? null,
 });
 
-let count = 0
+let count = 0;
 const ensureSeatMap = async (seg) => {
   const key = segKey(seg);
-  if (seatMapStatus[key] === 'loading' || seatMapStatus[key] === 'ready') return;
+  if (seatMapStatus[key] === "loading" || seatMapStatus[key] === "ready")
+    return;
 
-  seatMapStatus[key] = 'loading';
+  seatMapStatus[key] = "loading";
   try {
-    
     const payload = buildSeatMapPayload(seg);
-    
     console.log(payload);
-    const { data } = await axios.post(route('get-seat-map'), payload);
+
+    seatMapPayload = payload;
+
+    console.log(seatMapPayload);
+    const { data } = await axios.post(route("get-seat-map"), seatMapPayload);
     console.log(data);
-    
+
     seatMapCache[key] = data;
-    seatMapStatus[key] = 'ready';
+    seatMapStatus[key] = "ready";
   } catch (e) {
-    seatMapStatus[key] = 'error';
+    console.log(e.message);
+    seatMapStatus[key] = "error";
   }
+};
+
+const updateSeatMap = (seg, newMap) => {
+  const key = segKey(seg);
+  console.log("Segment key ", key);
+  console.log("Segment map ", newMap);
+  seatMapCache[key] = newMap;
+
+  console.log(seatMapStatus);
 };
 
 const toUpper = (s) => (s ?? "").toString().toUpperCase();
@@ -430,26 +376,27 @@ function capitalize(word = "") {
 }
 
 const handleSeat = (seat, currentIndexInLegsToMap) => {
-  const segView = legsToMap.value[currentIndexInLegsToMap]
-  if (!segView) return
+  const segView = legsToMap.value[currentIndexInLegsToMap];
+  if (!segView) return;
 
-  const key = segKey(segView)
-  const i = segments.value.findIndex(s => segKey(s) === key)
-  if (i === -1) return
+  const key = segKey(segView);
+  const i = segments.value.findIndex((s) => segKey(s) === key);
 
-  const curr = segments.value[i]
+  if (i === -1) return;
 
-  const shouldUnset =
-    curr.newSeat && curr.newSeat.seatCode === seat.seatCode
+  const curr = segments.value[i];
+
+  const shouldUnset = curr.newSeat && curr.newSeat.seatCode === seat.seatCode;
 
   if (shouldUnset) {
-    const { newSeat, ...rest } = curr
-    segments.value[i] = rest
+    const { newSeat, ...rest } = curr;
+    segments.value[i] = rest;
   } else {
-    segments.value[i] = { ...curr, newSeat: seat }
+    segments.value[i] = { ...curr, newSeat: seat };
   }
-}
 
+  console.log(segments.value);
+};
 
 const handleCloseMap = (showToast, segment) => {
   step.value = "form";
@@ -460,16 +407,18 @@ const handleCloseMap = (showToast, segment) => {
   if (segment) {
     handleToggle(segment, false);
   }
+};
 
-}
+onMounted(() => {});
 
-const readyCount = computed(() =>
-  legsToMap.value.filter(s => seatMapStatus[segKey(s)] === 'ready').length
+const readyCount = computed(
+  () =>
+    legsToMap.value.filter((s) => seatMapStatus[segKey(s)] === "ready").length
 );
 
-const canContinue = computed(() =>
-  legsToMap.value.length > 0 &&
-  readyCount.value === legsToMap.value.length
+const canContinue = computed(
+  () =>
+    legsToMap.value.length > 0 && readyCount.value === legsToMap.value.length
 );
 
 const continueLabel = computed(() => {
@@ -481,24 +430,24 @@ const continueLabel = computed(() => {
 const goToSeats = () => {
   if (!canContinue.value) return;
   if (!clid.value) {
-    noCorp.value = true
-    openModal.value = true
-    modalLabel.value = trads.label_no_seats_available
+    noCorp.value = true;
+    openModal.value = true;
+    modalLabel.value = trads.label_no_seats_available;
   } else {
-    step.value = 'seatsMap';
+    step.value = "seatsMap";
   }
 };
 
 const deleteSelection = (payload) => {
   let key;
 
-  if (typeof payload === 'number') {
+  if (typeof payload === "number") {
     const segView = legsToMap.value[payload];
     if (!segView) return;
     key = segKey(segView);
-  } else if (typeof payload === 'string') {
+  } else if (typeof payload === "string") {
     key = payload;
-  } else if (payload && typeof payload === 'object') {
+  } else if (payload && typeof payload === "object") {
     key = segKey(payload);
   }
 
@@ -507,17 +456,16 @@ const deleteSelection = (payload) => {
   next.delete(key);
   selectedIds.value = next;
 
-  const i = segments.value.findIndex(s => segKey(s) === key);
+  const i = segments.value.findIndex((s) => segKey(s) === key);
   if (i !== -1) {
     const { newSeat, ...rest } = segments.value[i];
-    segments.value[i] = { ...rest }; 
+    segments.value[i] = { ...rest };
   }
   console.log(selectedIds.value.size);
-  
+
   if (selectedIds.value.size == 0) {
-    handleCloseMap()
+    handleCloseMap();
   }
-  
 };
 
 function onUpdateAgreeTerms({ index, value }) {
@@ -525,22 +473,24 @@ function onUpdateAgreeTerms({ index, value }) {
   if (!segView) return;
 
   const key = segKey(segView);
-  const i = segments.value.findIndex(s => segKey(s) === key);
+  const i = segments.value.findIndex((s) => segKey(s) === key);
   if (i === -1) return;
 
   const curr = segments.value[i];
   segments.value[i] = { ...curr, agreeTerms: value };
 }
 
-watch(legsToMap, (list) => {
-  console.log(list);
-  
-  list.forEach(ensureSeatMap);
-}, { immediate: true });
+watch(
+  legsToMap,
+  (list) => {
+    list.forEach(ensureSeatMap);
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
-<section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
+  <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
     <ToolWrapper
       class="mb-40"
       :tool="trads.label_tool_name"
@@ -572,23 +522,23 @@ watch(legsToMap, (list) => {
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
             <p>
-              {{trads.label_1_panel}}
+              {{ trads.label_1_panel }}
             </p>
           </div>
           <div class="flex flex-row items-center gap-2">
             <Icon name="BadSeatSelection" />
             <p>
-              {{trads.label_2_panel}}
+              {{ trads.label_2_panel }}
             </p>
           </div>
           <div class="flex flex-row items-center gap-2">
             <Icon name="WebCKI" />
-            <p>{{trads.label_3_panel}}</p>
+            <p>{{ trads.label_3_panel }}</p>
           </div>
           <div class="flex items-center gap-2">
             <Icon name="FlexibleFares" />
             <p>
-              {{trads.label_4_panel}}
+              {{ trads.label_4_panel }}
             </p>
           </div>
         </div>
@@ -598,28 +548,32 @@ watch(legsToMap, (list) => {
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
             <p>
-              {{trads.label_1_panel}}
+              {{ trads.label_1_panel }}
             </p>
           </div>
           <div class="flex flex-row items-center gap-2">
             <Icon name="WebCKI" />
-            <p>{{trads.label_3_panel}}</p>
+            <p>{{ trads.label_3_panel }}</p>
           </div>
           <div class="flex flex-row items-center gap-2">
             <Icon name="BadSeatSelection" />
             <p>
-              {{trads.label_2_panel}}
+              {{ trads.label_2_panel }}
             </p>
           </div>
           <div class="flex items-center gap-2">
             <Icon name="FlexibleFares" />
             <p>
-              {{trads.label_4_panel}}
+              {{ trads.label_4_panel }}
             </p>
           </div>
         </div>
       </ToolPanel>
-      <div id="ticket-form" v-else-if="step === 'form'" class="flex flex-col gap-5 mt-10">
+      <div
+        id="ticket-form"
+        v-else-if="step === 'form'"
+        class="flex flex-col gap-5 mt-10"
+      >
         <PNRForm
           :ticketForm="ticketForm"
           :trads="trads"
@@ -635,7 +589,7 @@ watch(legsToMap, (list) => {
           v-if="notificationError"
           variant="error"
           @close="() => (notificationError = false)"
-          >
+        >
           {{ notificationError }}
         </NotificationBar>
 
@@ -668,7 +622,7 @@ watch(legsToMap, (list) => {
         class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
       >
         <p class="text-xs sm:text-base">
-          {{trads.label_footer_text}}
+          {{ trads.label_footer_text }}
         </p>
         <Button
           class="m-5"
@@ -676,7 +630,7 @@ watch(legsToMap, (list) => {
           size="lg"
           @click="goToSeats"
           :disabled="!canContinue"
-          >{{ continueLabel}}</Button
+          >{{ continueLabel }}</Button
         >
       </div>
     </footer>
@@ -692,19 +646,28 @@ watch(legsToMap, (list) => {
   >
     <SeatsMapLayout
       v-if="step === 'seatsMap'"
+      :isStandBy="isStandBy"
+      :formPayload="ticketForm"
+      :seatMapPayload="seatMapPayload"
+      @updateSeatMap="updateSeatMap"
       @close="handleCloseMap"
       @addSeat="handleSeat"
       @delete="deleteSelection"
       @update-agree-terms="onUpdateAgreeTerms"
-      @assignSeat="handleAssignSeats"
+      :assignSeat="handleAssignSeats"
       :trads="trads"
       :passenger="passenger"
       :seatsMapInfo="seatMapCache"
       :segments="legsToMap"
       :allSeatsAssigned="allSeatsAssigned"
+      @updateReservation="updateReservation"
     />
   </Transition>
-  <GeneralToast v-if="isToastOpen" :text="trads.label_success_toast" @close="isToastOpen = false"/>
+  <GeneralToast
+    v-if="isToastOpen"
+    :text="trads.label_success_toast"
+    @close="isToastOpen = false"
+  />
 </template>
 
 <style scoped>

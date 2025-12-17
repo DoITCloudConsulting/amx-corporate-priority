@@ -1,0 +1,79 @@
+import { ref, watch, onMounted } from "vue";
+
+export const useSeatModalStage = ({ trads }) => {
+  const stageName = ref("");
+
+  const setStageName = (newStage) => (stageName.value = newStage);
+
+  onMounted(() => {
+    // setStageName("condonate");
+  });
+
+  const createStage = ({ stageProps = {}, t }) => ({
+    title: t.title ?? trads.label_seats,
+    mainText: t.mainText,
+    backButton: true,
+    checkbox: {
+      agreeTerms: false,
+      text: trads.label_agree_terms,
+    },
+    primaryButton: {
+      text: trads.label_continue,
+      event: () => {},
+    },
+    ...stageProps,
+  });
+
+  const stages = {
+    preferent: createStage({
+      t: {
+        mainText: trads.label_seat_is_preferent,
+      },
+    }),
+    noPreferent: createStage({
+      t: {
+        mainText: trads.label_seat_no_preferent,
+      },
+    }),
+    condonate: createStage({
+      t: {
+        title: trads.label_condonate,
+        mainText: trads.label_seat_condonate,
+      },
+      stageProps: {
+        checkbox: null,
+        backButton: false,
+        primaryButton: {
+          text: trads.label_seat_yes_condonate,
+          event: () => {},
+        },
+        secondaryButton: {
+          text: trads.label_seat_no_condonate,
+          event: () => {},
+        },
+      },
+    }),
+    success: createStage({
+      t: {
+        mainText: trads.label_change_success,
+      },
+    }),
+  };
+
+  const current = ref({});
+
+  watch(stageName, (newValue) => {
+    console.log(newValue);
+    if (stages[newValue] === undefined) {
+      console.warn("⚙️ Usa un stageName correcto en useSeatModalStage");
+      current.value = {};
+      return;
+    }
+
+    current.value = stages[newValue];
+
+    console.log(current.value);
+  });
+
+  return { stageName, setStageName, current };
+};

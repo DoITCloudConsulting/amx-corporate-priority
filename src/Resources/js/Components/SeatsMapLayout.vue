@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, watch, watchEffect } from "vue";
+import { ref, reactive, computed, watch, watchEffect, onMounted } from "vue";
 import {
   SeatModal,
   HeadSeatsBar,
@@ -10,58 +10,141 @@ import {
   Button,
   LinkButton,
 } from "am-ui-package";
+import { useSeatModalStage } from "../composables/useSeatModalStage";
+import { corporatePriorityService } from "../../services/CorporatePriorityService";
+import CircleLoader from "./CircleLoader.vue";
+import { getTicketStatus } from "../composables/useTicketStatus";
 
 const props = defineProps({
   seatsMapInfo: { type: Array, default: () => [] },
   segments: { type: Array, default: () => [] },
   passenger: { type: Object, default: () => ({}) },
   trads: { type: Object, default: () => ({}) },
-  allSeatsAssigned: { type: Boolean, default: true }
+  allSeatsAssigned: { type: Boolean, default: true },
+  seatMapPayload: { type: Object, default: {} },
+  isStandBy: { type: Boolean, required: true },
+  formPayload: { type: Object, default: {}, required: true },
+  assignSeat: {
+    type: Function,
+    required: true,
+  },
 });
 
 const aircraftType = {
-  "79M": ['A','B','C','|','D','E','F'],
-  "7M9": ['A','B','C','|','D','E','F'],
-  "7M8": ['A','B','C','|','D','E','F'],
-  "E90": ['A','B','|','C','D'],
-  "E-190": ['A','B','|','C','D'],
-  "7S8": ['A','B','|','C','D'],
-  "789": ['A','B','C','|','D','E','F','|','G','H','J'],
-}
+  "79M": ["A", "B", "C", "|", "D", "E", "F"],
+  "7M9": ["A", "B", "C", "|", "D", "E", "F"],
+  "7M8": ["A", "B", "C", "|", "D", "E", "F"],
+  E90: ["A", "B", "|", "C", "D"],
+  "E-190": ["A", "B", "|", "C", "D"],
+  "7S8": ["A", "B", "|", "C", "D"],
+  789: ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
+};
 
-const emit = defineEmits(["close", "addSeat", "delete", "assignSeat", "update-agree-terms"]);
+const emit = defineEmits([
+  "close",
+  "addSeat",
+  "delete",
+  "update-agree-terms",
+  "updateSeatMap",
+  "updateReservation",
+]);
 
+const isAssigningSeat = ref(false);
+const isProcessingCondonation = ref(false);
 const currentSegment = ref(0);
 const modalOpenBySegment = reactive({});
 const initialHasAnySeatByIndex = reactive({});
+const canContinueWithNextSegment = ref(false);
 
 const modalLabel = ref();
 
-const currentSegmentInfo = computed(() => props.segments[currentSegment.value] || {});
-const currentSeatMapRaw = computed(() => props.seatsMapInfo[currentSegmentInfo.value.segmentID] || null);
+const currentSegmentInfo = computed(() => {
+  console.log(props.segments);
+  return props.segments[currentSegment.value] || {};
+});
+const currentSeatMapRaw = computed(() => {
+  return props.seatsMapInfo[currentSegmentInfo.value.segmentID] || null;
+});
 
+onMounted(async () => {
+  const currentSegment = { ...currentSegmentInfo.value };
+
+  corporatePriorityService.reservationSeatMap = { ...props.seatsMapInfo };
+  corporatePriorityService.currentSegment = { ...currentSegmentInfo.value };
+  corporatePriorityService.reservation = {
+    ...props.formPayload,
+    passenger: props.passenger,
+    isStandBy: props.isStandBy,
+  };
+
+  setStageNameBySeatTypeAndStatus(currentSegment);
+});
+
+watch(currentSegmentInfo, (newValue) => {
+  setStageNameBySeatTypeAndStatus(newValue);
+
+  corporatePriorityService.currentSegment = { ...newValue };
+});
+
+const setStageNameBySeatTypeAndStatus = (segment) => {
+  // If the segment has a seat already assigned
+  if (segment.seats.length) {
+    const currentSeatAssigned = corporatePriorityService.findSeat(
+      segment.segmentID,
+      segment.seats[0].seatCode
+    );
+
+    if (currentSeatAssigned.type === "PREFERRED") {
+      if (segment.seats[0].status === "PAID" || segment.newSeat) {
+        // If seat is type preferred and already paid
+        setStageName("preferent");
+      } else if (segment.seats[0].status !== "PAID") {
+        // If seat is type preference but is still unpaid
+        setStageName("condonate");
+      }
+    } else {
+      // If seat is not type preferent
+      setStageName("noPreferent");
+    }
+  } else if (segment?.newSeat?.seatCode !== undefined) {
+    // If the segment is found with an unassigned seat
+    setStageName("condonate");
+  } else {
+    // If the segment is found with an unassigned seat
+    setStageName("");
+  }
+};
 
 const currentSeatMap = computed(() => {
   const raw = currentSeatMapRaw.value;
-  if (Array.isArray(raw)) return raw;
-  if (raw && Array.isArray(raw.seatMap)) return raw.seatMap;
+
+  if (raw?.seatMap || raw.length) {
+    const map = (raw?.seatMap || raw).filter(
+      (seat) => seat.type === "PREFERRED"
+    );
+    console.log(map);
+    return map;
+  }
+
   return [];
 });
 
 const agreeTerms = computed({
   get: () => !!currentSegmentInfo.value?.agreeTerms,
   set: (val) => {
-    emit('update-agree-terms', { index: currentSegment.value, value: val });
-  }
+    emit("update-agree-terms", { index: currentSegment.value, value: val });
+  },
 });
 
-const corporateSeatCode = computed(() => currentSegmentInfo.value?.seats?.[0]?.seatCode || null);
+const corporateSeatCode = computed(
+  () => currentSegmentInfo.value?.seats?.[0]?.seatCode || null
+);
 
 const hasCorporateSeatInMap = computed(() => {
   const code = corporateSeatCode.value;
   const map = currentSeatMap.value;
   if (!code || !map?.length) return false;
-  return map.some(s => s?.seatCode === code);
+  return map.some((s) => s?.seatCode === code);
 });
 
 const initModalStates = (segments = []) => {
@@ -72,19 +155,41 @@ const initModalStates = (segments = []) => {
     }
     // guardamos si originalmente tenía asientos
     if (initialHasAnySeatByIndex[key] === undefined) {
-      initialHasAnySeatByIndex[key] = !!(seg?.seats?.length);
+      initialHasAnySeatByIndex[key] = !!seg?.seats?.length;
     }
   });
 };
 
 const newSeatExists = computed(() => !!currentSegmentInfo.value?.newSeat);
 
-const assign = () => {
-  emit('assignSeat', currentSegmentInfo.value);
+const assignSeat = async () => {
+  try {
+    isAssigningSeat.value = true;
+
+    const payload = corporatePriorityService.prepareSeatAssignmentPayload();
+
+    const response = await corporatePriorityService.assignSeat(payload);
+    const seatAssigned = currentSegmentInfo.value.seats[0] ?? [];
+
+    if (response.status === 200 && response.data.length) {
+      const seatMapPayload = corporatePriorityService.prepareSeatMapPayload();
+
+      const newMap = await corporatePriorityService.getSeatMap(seatMapPayload);
+
+      emit("updateSeatMap", currentSegmentInfo.value, newMap);
+
+      setStageName("success");
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    isAssigningSeat.value = false;
+  }
 };
 
 const modalIsOpenForCurrent = computed(() => {
   const key = currentSegment.value;
+  console.log(modalOpenBySegment[key]);
   return !!modalOpenBySegment[key];
 });
 
@@ -96,13 +201,15 @@ watchEffect(() => {
 
 const seatType = ref(props.trads.label_am_preferred);
 const segmentCount = computed(
-  () => `${currentSegment.value + 1} ${props.trads.label_of} ${props.segments.length}`
+  () =>
+    `${currentSegment.value + 1} ${props.trads.label_of} ${
+      props.segments.length
+    }`
 );
 const initials = computed(() => {
   const p = props.passenger || {};
-  return p.firstName && p.lastName ? p.firstName[0] + p.lastName[0] : '';
+  return p.firstName && p.lastName ? p.firstName[0] + p.lastName[0] : "";
 });
-
 
 const seatsCharacteristics = ref([
   props.trads.label_standard_seat,
@@ -111,7 +218,6 @@ const seatsCharacteristics = ref([
 ]);
 
 const handleSelect = (index) => {
-  
   if (index === props.segments.length) {
     currentSegment.value = 0;
   } else {
@@ -120,26 +226,29 @@ const handleSelect = (index) => {
 };
 
 const handleSelectSeat = (seat) => {
+  console.log(seat);
   if (!seat) return;
   emit("addSeat", seat, currentSegment.value);
 };
 
 const handleAsignSeat = () => {
-  const anyChange = props.segments.some(seg => isSeatChange(seg));
+  const anyChange = props.segments.some((seg) => isSeatChange(seg));
 
   if (!anyChange || !currentSegmentInfo.value?.agreeTerms) {
-    emit('close');
+    emit("close");
     return;
   }
-  emit('asignSeat');
+  emit("asignSeat");
 };
 
 const handleDelete = (s) => {
-console.log(s);
-  emit('delete', s)
-}
+  console.log(s);
+  emit("delete", s);
+};
 
-const initialHadAnySeat = computed(() => initialHasAnySeatByIndex[currentSegment.value] ?? false);
+const initialHadAnySeat = computed(
+  () => initialHasAnySeatByIndex[currentSegment.value] ?? false
+);
 
 const isCorporateSegment = computed(() => {
   const s = currentSegmentInfo.value ?? {};
@@ -166,7 +275,10 @@ const isSeatChange = (seg) => {
   const newCode = seg.newSeat?.seatCode ?? null;
   if (!newCode) return false;
 
-  const originalFirst = Array.isArray(seg.seats) && seg.seats.length ? seg.seats[0]?.seatCode : null;
+  const originalFirst =
+    Array.isArray(seg.seats) && seg.seats.length
+      ? seg.seats[0]?.seatCode
+      : null;
   if (!originalFirst) return true;
 
   if (originalFirst !== newCode) return true;
@@ -174,11 +286,9 @@ const isSeatChange = (seg) => {
   return false;
 };
 
-
 watch(props.segments, () => {
   console.log(props.segments);
-  
-})
+});
 
 watch(
   () => props.segments,
@@ -187,11 +297,78 @@ watch(
   },
   { immediate: true }
 );
+
+const condonateSeats = async () => {
+  try {
+    isProcessingCondonation.value = true;
+
+    const response = await corporatePriorityService.condonate();
+
+    console.log(response);
+
+    if (response.message === "Booking processed successfully") {
+      const { pnr, passenger, numberTicket } =
+        corporatePriorityService.reservation;
+
+      const reservation = await getTicketStatus({
+        pnr,
+        lastname: passenger.lastName,
+        numberTicket,
+      });
+
+      console.log(reservation);
+
+      const { seatMapsBySegmentId, segments } =
+        await corporatePriorityService.getAllSeatMaps(reservation);
+
+      segments.forEach((segment) => {
+        if (segment.seats.length) {
+          const segmentId = segment.segmentID;
+          // Seat from segment
+          const seat = segment.seats[0];
+          // Seat from seat map
+          const mapSeat = corporatePriorityService.findSeat(
+            segmentId,
+            seat.seatCode,
+            seatMapsBySegmentId
+          );
+
+          if (mapSeat.type === "PREFERRED" && seat.status !== "PAID") {
+            console.log(
+              "No se pudieron condonar todos los asientos disponibles"
+            );
+            return;
+          } else {
+            console.log("Todos los asientos fueron condonados correctamente");
+          }
+        }
+      });
+      corporatePriorityService.downloadPdf(segments);
+
+      emit("updateReservation", reservation);
+      emit("close");
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    isProcessingCondonation.value = false;
+  }
+};
+
+const {
+  current: currentModalStage,
+  setStageName,
+  stageName,
+} = useSeatModalStage({
+  trads: props.trads,
+});
 </script>
 
 <template>
   <section class="w-screen bg-[#F2F8FC] flex flex-col items-center">
-    <main class="relative w-full h-full flex justify-evenly gap-5 md:pl-[46px] sm:pr-16">
+    <main
+      class="relative w-full h-full flex justify-evenly gap-5 md:pl-[46px] sm:pr-16"
+    >
       <SeatsMap
         :initials="initials"
         :data="currentSeatMap"
@@ -201,54 +378,111 @@ watch(
         :characteristics="seatsCharacteristics"
       />
 
-      <div id="desktop" class="hidden sm:flex flex-col gap-10 pt-20">
-        <div>
-          <p class="mb-3">Vuelo AM</p>
+      <div
+        v-if="stageName"
+        class="fixed lg:static left-0 p-5 bg-black bg-opacity-50 lg:bg-transparent w-full h-full lg:h-auto lg:w-auto top-0 flex z-50 flex-col gap-10 items-center justify-center"
+      >
+        <div class="hidden lg:block">
+          <p class="mb-3 font-GarnettSemibold text-sm text-amDarkGray">
+            Vuelo AM
+          </p>
           <SeatModal
             class="hidden sm:flex"
             :seatType="seatType"
             :characteristics="seatsCharacteristics"
           />
         </div>
-        <InfoSeatModal v-if="(currentSegmentInfo.seats?.length || currentSegmentInfo.newSeat) && modalIsOpenForCurrent && !currentSegmentInfo.success" class="z-50flex flex-col gap-[15px]" :title="trads.label_seats">
+
+        <InfoSeatModal
+          v-if="stageName === 'condonate'"
+          class="z-50 flex flex-col gap-[15px] w-full"
+          :title="currentModalStage.title"
+        >
           <div class="p-6 md:p-8 flex flex-col gap-6">
-            <p class=" text-center text-sm">{{ modalLabel }}</p>
-              <CheckInput
-                class="text-xs"
-                :label="trads.label_agree_terms"
-                v-model="agreeTerms"
-              />
-            <div class="flex flex-col gap-4">
-              <LinkButton class="w-full" @click="$emit('close', false, currentSegmentInfo)">{{ trads.label_back }}</LinkButton>
-              <Button @click="assign" width="full" :disabled="!currentSegmentInfo.agreeTerms ">
-                {{ trads.label_continue }}
+            <p class="text-center text-sm">{{ currentModalStage.mainText }}</p>
+
+            <div class="flex flex-col lg:flex-row gap-[25px] justify-center">
+              <Button
+                @click="$emit('close', false, currentSegmentInfo)"
+                size="lg"
+                variant="secondary"
+                width="full"
+                :disabled="isAssigningSeat"
+                class="w-full px-5 text-sm border rounded font-GarnettSemibold border-amBlueInnovation"
+              >
+                {{ currentModalStage.secondaryButton.text }}
+              </Button>
+              <Button
+                @click="assignSeat"
+                size="lg"
+                width="full"
+                :disabled="isAssigningSeat"
+              >
+                <div
+                  v-if="isAssigningSeat"
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <CircleLoader size="xs" />
+                </div>
+
+                <span v-else>
+                  {{ currentModalStage.primaryButton.text }}
+                </span>
               </Button>
             </div>
           </div>
         </InfoSeatModal>
 
-        <InfoSeatModal v-if="currentSegmentInfo.success" class="z-50flex flex-col gap-[15px]" :title="trads.label_seats">
+        <!-- (currentSegmentInfo.seats?.length || currentSegmentInfo.newSeat) &&
+        modalIsOpenForCurrent && !currentSegmentInfo.success  -->
+        <InfoSeatModal
+          v-if="stageName === 'preferent' || stageName === 'noPreferent'"
+          class="z-50 flex flex-col gap-[15px] w-full"
+          :title="currentModalStage.title"
+        >
           <div class="p-6 md:p-8 flex flex-col gap-6">
-            <p class=" text-center text-sm">{{ trads.label_change_success }}</p>
-          </div>
-        </InfoSeatModal>
-      </div>
-
-      <div id="mobile" v-if="(currentSegmentInfo.seats?.length || currentSegmentInfo.newSeat) && modalIsOpenForCurrent "  class="absolute sm:hidden w-screen h-screen flex justify-center pt-60 bg-black bg-opacity-30 z-50">
-        <InfoSeatModal class="z-50 flex flex-col gap-[15px]" :title="trads.label_seats">
-          <div class="p-5 flex flex-col gap-6">
-            <p class=" text-center text-xs">{{ modalLabel }}</p>
-              <CheckInput
-                class="text-[11px]"
-                :label="trads.label_agree_terms"
-                v-model="agreeTerms"
-              />
+            <p class="text-center text-sm">{{ currentModalStage.mainText }}</p>
+            <CheckInput
+              class="text-xs"
+              :label="currentModalStage.checkbox.text"
+              v-model="currentModalStage.checkbox.agreeTerms"
+            />
             <div class="flex flex-col gap-4">
-              <LinkButton class="w-full" @click="$emit('close', false, currentSegmentInfo)">{{ trads.label_back }}</LinkButton>
-              <Button @click="() => (modalOpenBySegment[currentSegment] = false)" width="full" :disabled="!currentSegmentInfo.agreeTerms ">
-                {{ trads.label_continue }}
+              <LinkButton
+                class="w-full"
+                @click="$emit('close', false, currentSegmentInfo)"
+                >{{ trads.label_back }}</LinkButton
+              >
+              <Button
+                @click="assignSeat"
+                width="full"
+                :disabled="
+                  !currentModalStage.checkbox.agreeTerms || isAssigningSeat
+                "
+              >
+                <div
+                  v-if="isAssigningSeat"
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <CircleLoader size="xs" />
+                </div>
+
+                <span v-else>
+                  {{ trads.label_continue }}
+                </span>
               </Button>
             </div>
+          </div>
+        </InfoSeatModal>
+
+        <!-- currentSegmentInfo.success -->
+        <InfoSeatModal
+          v-if="stageName === 'success'"
+          class="z-50 flex flex-col gap-[15px] w-full"
+          :title="trads.label_seats"
+        >
+          <div class="p-6 md:p-8 flex flex-col gap-6">
+            <p class="text-center text-sm">{{ currentModalStage.mainText }}</p>
           </div>
         </InfoSeatModal>
       </div>
@@ -261,7 +495,7 @@ watch(
       :currentSegmentIndex="currentSegment"
       :initials="initials"
       @selectSegment="handleSelect"
-      @save="handleAssignSeat"
+      @save="condonateSeats"
       @close="() => $emit('close')"
       @delete="handleDelete"
       :trads="trads"

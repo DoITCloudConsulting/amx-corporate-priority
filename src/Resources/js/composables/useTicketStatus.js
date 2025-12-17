@@ -1,37 +1,44 @@
 // composables/useTicketStatus.js
 
-import { fetchTicketStatus, fetchCorporateValidation } from "../../services/TicketStatusService";
+import {
+  fetchTicketStatus,
+  fetchCorporateValidation,
+} from "../../services/TicketStatusService";
 // import { getTranslation } from "@shared/getTranslation";
 // import { useEventTracker } from "@/composable/useEventTracker";
 // import { useUserSessionStore } from "./useAuthUserStore";
-import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 
 function getTranslation(key) {
-  return key
+  return key;
 }
 
 async function validateResponse({ message, segments, data }, ticketForm) {
-
   if (!data.customPassengerSegments.clid) {
     const response = await fetchCorporateValidation({ pnr: ticketForm.pnr });
     console.log(response);
-    
+
     if (!response?.isCorporate) {
-      const errorNotification = getTranslation("common.tools.error.pnr.not-corporate");
+      const errorNotification = getTranslation(
+        "common.tools.error.pnr.not-corporate"
+      );
       // await trackError(ticketForm, errorNotification);
       return { success: false, errorNotification };
     }
   }
 
   if (message === "PNR not found, code: 100123, severity: MODERATE") {
-    const errorNotification = getTranslation("common.tools.error.pnr.invalid-key");
+    const errorNotification = getTranslation(
+      "common.tools.error.pnr.invalid-key"
+    );
     // await trackError(ticketForm, errorNotification);
     return { success: false, errorNotification };
   }
 
   if (!segments || !segments.length) {
-    const errorNotification = getTranslation("common.tools.error.lastname-not-match");
+    const errorNotification = getTranslation(
+      "common.tools.error.lastname-not-match"
+    );
     // await trackError(ticketForm, errorNotification);
     return { success: false, errorNotification };
   }
@@ -49,10 +56,14 @@ async function validateResponse({ message, segments, data }, ticketForm) {
 export async function getTicketStatus(ticketData) {
   try {
     const data = await fetchTicketStatus(ticketData);
-    console.log(data)
-    
+    console.log(data);
+
     const { success, errorNotification } = await validateResponse(
-      { message: data.benefits.benefits_error, segments: data.customPassengerSegments.legs, data },
+      {
+        message: data.benefits.benefits_error,
+        segments: data.customPassengerSegments.legs,
+        data,
+      },
       ticketData
     );
 
@@ -85,33 +96,45 @@ export async function getTicketStatus(ticketData) {
     const code = error.response?.data?.body.errorCode;
     const status = error.response?.data?.body.status;
     const detail = error.response?.data?.body.detail;
-    
-    if (detail == "400 Bad Request on GET request for \"https:\/\/amx-c-mtpsbk-de.amlab7.com\/tc\/reservation\/pnr\": \"{\"channel\":\"web\",\"reason\":\"ERR.TC.RESERVATION.LASTNAME_NOT_MATCH\",\"httpCode\":\"400\"}\"") {
-      const errorNotification = getTranslation("common.tools.error.lastname-not-match");
+
+    if (
+      detail ==
+      '400 Bad Request on GET request for "https://amx-c-mtpsbk-de.amlab7.com/tc/reservation/pnr": "{"channel":"web","reason":"ERR.TC.RESERVATION.LASTNAME_NOT_MATCH","httpCode":"400"}"'
+    ) {
+      const errorNotification = getTranslation(
+        "common.tools.error.lastname-not-match"
+      );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
     }
 
     if (status === 404) {
-      const errorNotification = getTranslation("Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.");
+      const errorNotification = getTranslation(
+        "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority."
+      );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
-    
     }
     if (code === "57111303") {
-      const errorNotification = getTranslation("common.tools.error.pnr.reservation-out-sync");
+      const errorNotification = getTranslation(
+        "common.tools.error.pnr.reservation-out-sync"
+      );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
     }
 
     if (code === "57111304") {
-      const errorNotification = getTranslation("tools.baggage.error.no-flight-itinerary");
+      const errorNotification = getTranslation(
+        "tools.baggage.error.no-flight-itinerary"
+      );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
     }
 
     if (code === "5000") {
-      const errorNotification = getTranslation("Su clave de reservación no es una clave válida en nuestro sistema.");
+      const errorNotification = getTranslation(
+        "Su clave de reservación no es una clave válida en nuestro sistema."
+      );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
     }

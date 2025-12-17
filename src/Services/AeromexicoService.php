@@ -23,7 +23,7 @@ class AeromexicoService
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
 
         $token = $this->tokenService->grantAccess();
-        
+
         $client = new Client();
 
         $uuid_v1 = Uuid::uuid1()->toString();
@@ -58,11 +58,12 @@ class AeromexicoService
         $payload = SeatMapMapper::request($data);
 
 
+
         $response = $client->post($MS_SEAT_MAP, [
             "headers" => [
                 "channel" => "web",
                 "flow" => "myb",
-                "x-transactionId" => $uuid_v1,
+                "x-transactionId" => "a8a4426e-d6de-11f0-ac41-581122872a63",
                 "store" => "mx",
                 "platform" => "web",
                 "workflow" => "ambusiness",
@@ -87,6 +88,8 @@ class AeromexicoService
         $uuid_v1 = Uuid::uuid1()->toString();
 
         $payload = AssignSeatMapper::request($data);
+
+
 
         $response = $client->post($MS_SEAT, [
             "headers" => [
@@ -132,7 +135,7 @@ class AeromexicoService
         $MS_CORPORATE_VALIDATION = config("corporate-priority.MS_CORPORATE_VALIDATION");
 
         $eks_token = $this->eksToken();
-        
+
         $client = new Client();
 
         $response = $client->post($MS_CORPORATE_VALIDATION, [
@@ -154,24 +157,16 @@ class AeromexicoService
 
         $client = new Client();
 
-        $xmlBody = '<?xml version="1.0" encoding="UTF-8"?>
-        <cepMessage xmlns="http://www.sabre.com/asx/booking/epservicesV2">
-            <content>
-                <bookings xmlns="http://www.sabre.com/asx/booking">
-                    <booking>
-                        <rloc>' . $pnr . '</rloc>
-                    </booking>
-                </bookings>
-            </content>
-        </cepMessage>';
-
         $response = $client->post($MS_CONDONATE_SEATS_RESERVATION, [
             "headers" => [
                 "Content-Type" => "application/json"
             ],
-            "body" => $xmlBody
+            "json" => [
+                "rloc" => $pnr
+            ]
 
         ]);
+
 
         return json_decode($response->getBody()->getContents(), true);
     }
