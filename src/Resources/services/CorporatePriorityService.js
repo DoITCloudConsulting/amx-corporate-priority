@@ -153,8 +153,7 @@ class CorporatePriorityService {
 
     return data;
   }
-
-  downloadPdf(segments) {
+  async downloadPDF() {
     const confirmedSegments = [];
     const pendingSegments = [];
 
@@ -183,7 +182,22 @@ class CorporatePriorityService {
       })
     );
 
-    window.open("/pdf", "_blank");
+    const response = await axios.post(
+      route("pdf"),
+      {
+        fileName: "Corporate_Priority",
+        domain: window.location.origin,
+      },
+      {
+        responseType: "blob",
+      }
+    );
+    const url = window.URL.createObjectURL(response.data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Corporate_Priority.pdf"; // fuerza la descarga
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 }
 
