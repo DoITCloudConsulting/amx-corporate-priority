@@ -20,6 +20,7 @@ import CircleLoader from "../Components/CircleLoader.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
+const isFormLoading = ref(false);
 const errorNotification = ref(false);
 const errorModal = ref(false);
 const passenger = ref({});
@@ -200,6 +201,7 @@ const alert = (message) => {
 
 const sendForm = async () => {
   isLoading.value = true;
+  isFormLoading.value = true;
   segments.value = [];
   notificationError.value = null;
   try {
@@ -218,6 +220,7 @@ const sendForm = async () => {
       err?.response?.data?.message || err?.message || "Error inesperado.";
   } finally {
     isLoading.value = false;
+    isFormLoading.value = true;
   }
 };
 
@@ -583,6 +586,7 @@ watch(
             }
           "
           @handleSend="sendForm"
+          :isLoading="isFormLoading"
         />
 
         <NotificationBar

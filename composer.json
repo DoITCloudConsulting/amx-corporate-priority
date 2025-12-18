@@ -32,11 +32,5 @@
             ".prettierignore",
             ".prettierrc"
         ]
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "C:/Users/adiel/Desktop/Work/amx-salesforce"
-        }
-    ]
+    }
 }
