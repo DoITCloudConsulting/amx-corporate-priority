@@ -338,7 +338,7 @@ const condonateSeats = async () => {
           }
         }
       });
-      corporatePriorityService.downloadPdf(segments);
+      corporatePriorityService.downloadPDF(segments);
 
       emit("updateReservation", reservation);
       emit("close");
