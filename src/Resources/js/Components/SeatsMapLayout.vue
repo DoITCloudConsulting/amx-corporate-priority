@@ -1,19 +1,14 @@
 <script setup>
 import { ref, reactive, computed, watch, watchEffect, onMounted } from "vue";
-import {
-  SeatModal,
-  HeadSeatsBar,
-  FooterSeatsBar,
-  SeatsMap,
-  InfoSeatModal,
-  CheckInput,
-  Button,
-  LinkButton,
-} from "am-ui-package";
+import { CheckInput, Button, LinkButton } from "am-ui-package";
+import SeatsMap from "./SeatsMap.vue";
 import { useSeatModalStage } from "../composables/useSeatModalStage";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
 import CircleLoader from "./CircleLoader.vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
+import FooterSeatsBar from "./FooterSeatsBar.vue";
+import SeatModal from "./SeatModal.vue";
+import InfoSeatModal from "./InfoSeatModal.vue";
 
 const props = defineProps({
   seatsMapInfo: { type: Array, default: () => [] },
@@ -365,9 +360,11 @@ const {
 </script>
 
 <template>
-  <section class="w-screen bg-[#F2F8FC] flex flex-col items-center">
-    <main
-      class="relative w-full h-full flex justify-evenly gap-5 md:pl-[46px] sm:pr-16"
+  <section
+    class="w-screen bg-[#F2F8FC] items-center grid md:grid-cols-[400px_1fr] lg:grid-cols-2 grid-rows-[1fr_auto]"
+  >
+    <div
+      class="relative w-full h-full flex justify-center md:justify-end gap-5 px-5 row-start-1 row-end-3 col-start-1"
     >
       <SeatsMap
         :initials="initials"
@@ -377,25 +374,29 @@ const {
         :currentSegment="currentSegmentInfo"
         :characteristics="seatsCharacteristics"
       />
+    </div>
+    <div
+      class="pl-5 md:pl-0 pr-5 md:pr-0 w-full h-full lg:h-auto lg:w-auto md:max-w-md flex flex-col justify-center"
+    >
+      <div class="hidden md:flex flex-col w-[280px] md:w-full mb-5">
+        <p class="mb-3 font-GarnettSemibold text-sm text-amDarkGray">
+          Vuelo AM
+        </p>
+        <SeatModal
+          class="hidden sm:flex"
+          :seatType="seatType"
+          :characteristics="seatsCharacteristics"
+        />
+      </div>
 
       <div
         v-if="stageName"
-        class="fixed lg:static left-0 p-5 bg-black bg-opacity-50 lg:bg-transparent w-full h-full lg:h-auto lg:w-auto top-0 flex z-50 flex-col gap-10 items-center justify-center"
+        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[100] flex flex-col items-center justify-center"
       >
-        <div class="hidden lg:block">
-          <p class="mb-3 font-GarnettSemibold text-sm text-amDarkGray">
-            Vuelo AM
-          </p>
-          <SeatModal
-            class="hidden sm:flex"
-            :seatType="seatType"
-            :characteristics="seatsCharacteristics"
-          />
-        </div>
-
         <InfoSeatModal
           v-if="stageName === 'condonate'"
-          class="z-50 flex flex-col gap-[15px] w-full"
+          @close="setStageName('')"
+          class="z-50 flex flex-col gap-[15px]"
           :title="currentModalStage.title"
         >
           <div class="p-6 md:p-8 flex flex-col gap-6">
@@ -433,10 +434,9 @@ const {
           </div>
         </InfoSeatModal>
 
-        <!-- (currentSegmentInfo.seats?.length || currentSegmentInfo.newSeat) &&
-        modalIsOpenForCurrent && !currentSegmentInfo.success  -->
         <InfoSeatModal
           v-if="stageName === 'preferent' || stageName === 'noPreferent'"
+          @close="setStageName('')"
           class="z-50 flex flex-col gap-[15px] w-full"
           :title="currentModalStage.title"
         >
@@ -475,9 +475,9 @@ const {
           </div>
         </InfoSeatModal>
 
-        <!-- currentSegmentInfo.success -->
         <InfoSeatModal
           v-if="stageName === 'success'"
+          @close="setStageName('')"
           class="z-50 flex flex-col gap-[15px] w-full"
           :title="trads.label_seats"
         >
@@ -486,7 +486,7 @@ const {
           </div>
         </InfoSeatModal>
       </div>
-    </main>
+    </div>
     <FooterSeatsBar
       :passenger="passenger"
       :segmentCount="trads.label_segment + ' ' + segmentCount"
