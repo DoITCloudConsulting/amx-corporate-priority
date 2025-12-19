@@ -214,7 +214,6 @@ const sendForm = async () => {
     }
 
     updateReservation(res);
-
   } catch (err) {
     notificationError.value =
       err?.response?.data?.message || err?.message || "Error inesperado.";
@@ -355,8 +354,7 @@ const ensureSeatMap = async (seg) => {
 
 const updateSeatMap = (seg, newMap) => {
   const key = segKey(seg);
-  console.log("Segment key ", key);
-  console.log("Segment map ", newMap);
+
   seatMapCache[key] = newMap;
 
   console.log(seatMapStatus);
@@ -483,12 +481,9 @@ function onUpdateAgreeTerms({ index, value }) {
   segments.value[i] = { ...curr, agreeTerms: value };
 }
 
-watch(
-  legsToMap,
-  (list) => {
-    list.forEach(ensureSeatMap);
-  }
-);
+watch(legsToMap, (list) => {
+  list.forEach(ensureSeatMap);
+});
 </script>
 
 <template>
