@@ -214,7 +214,6 @@ const sendForm = async () => {
 
     updateReservation(res);
 
-    segments.value.forEach(ensureSeatMap);
   } catch (err) {
     notificationError.value =
       err?.response?.data?.message || err?.message || "Error inesperado.";
@@ -394,12 +393,11 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
   if (shouldUnset) {
     const { newSeat, ...rest } = curr;
     segments.value[i] = rest;
-     isChangedSeat.value = false;
+    isChangedSeat.value = false;
   } else {
     segments.value[i] = { ...curr, newSeat: seat };
     isChangedSeat.value = true;
   }
-
 };
 
 const handleCloseMap = (showToast, segment) => {
@@ -488,8 +486,7 @@ watch(
   legsToMap,
   (list) => {
     list.forEach(ensureSeatMap);
-  },
-  { immediate: true }
+  }
 );
 </script>
 
