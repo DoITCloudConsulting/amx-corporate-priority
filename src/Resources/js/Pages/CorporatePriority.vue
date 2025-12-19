@@ -16,11 +16,11 @@ import axios from "axios";
 // import { getTranslation } from '@shared/getTranslation'
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
-import CircleLoader from "../Components/CircleLoader.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
-const errorNotification = ref(false);
+const isFormLoading = ref(false);
+const isChangedSeat = ref(false);
 const errorModal = ref(false);
 const passenger = ref({});
 const selected = ref([]);
@@ -202,6 +202,7 @@ console.log(window.location);
 
 const sendForm = async () => {
   isLoading.value = true;
+  isFormLoading.value = true;
   segments.value = [];
   notificationError.value = null;
   try {
@@ -214,12 +215,12 @@ const sendForm = async () => {
 
     updateReservation(res);
 
-    segments.value.forEach(ensureSeatMap);
   } catch (err) {
     notificationError.value =
       err?.response?.data?.message || err?.message || "Error inesperado.";
   } finally {
     isLoading.value = false;
+    isFormLoading.value = false;
   }
 };
 
@@ -393,11 +394,11 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
   if (shouldUnset) {
     const { newSeat, ...rest } = curr;
     segments.value[i] = rest;
+    isChangedSeat.value = false;
   } else {
     segments.value[i] = { ...curr, newSeat: seat };
+    isChangedSeat.value = true;
   }
-
-  console.log(segments.value);
 };
 
 const handleCloseMap = (showToast, segment) => {
@@ -486,8 +487,7 @@ watch(
   legsToMap,
   (list) => {
     list.forEach(ensureSeatMap);
-  },
-  { immediate: true }
+  }
 );
 </script>
 
@@ -593,6 +593,7 @@ watch(
             }
           "
           @handleSend="sendForm"
+          :isLoading="isFormLoading"
         />
 
         <NotificationBar
@@ -671,6 +672,7 @@ watch(
       :segments="legsToMap"
       :allSeatsAssigned="allSeatsAssigned"
       @updateReservation="updateReservation"
+      :isChangedSeat="isChangedSeat"
     />
   </Transition>
 </template>

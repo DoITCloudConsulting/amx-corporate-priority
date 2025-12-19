@@ -69,7 +69,7 @@ const handleSave = () => {
 <template>
   <div
     id="desktop"
-    class="hidden sm:flex relative justify-center min-h-20 flex-col z-50 col-start-1 row-start-2"
+    class="hidden sm:flex fixed bottom-0 justify-center min-h-20 flex-col z-[100] col-start-1 row-start-2"
   >
     <Transition name="collapse-desktop">
       <div
