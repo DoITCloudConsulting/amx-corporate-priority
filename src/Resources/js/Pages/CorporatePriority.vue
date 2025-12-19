@@ -43,155 +43,102 @@ const formatPassengerName = (p = {}) =>
     ? `${capitalize(p.firstName)} ${capitalize(p.lastName)}`
     : "";
 
-// const trads = {
-//   label_tool_name: getTranslation('tools.corporate.title'),
-//   label_tool_description: getTranslation('tools.corporate.description'),
-//   label_need_help: getTranslation('navbar.common.need-help'),
-//   label_back: "Regresar",
-//   label_name: getTranslation('common.tools.ticket.name'),
-//   label_status: getTranslation('common.tools.ticket.status'),
-//   label_origin: getTranslation('common.tools.ticket.origin'),
-//   label_destiny: getTranslation('common.tools.ticket.destination'),
-//   label_date: getTranslation('common.tools.ticket.destination'),
-//   label_time: getTranslation('common.tools.ticket.time'),
-//   label_seat: getTranslation('common.tools.ticket.seat'),
-//   label_class: getTranslation('common.tools.ticket.class'),
-//   label_type: getTranslation('common.tools.ticket.type'),
-//   label_pnr: getTranslation('common.tools.form.AMPNR'),
-//   label_ticket: getTranslation('common.tools.ticket.ticket'),
-//   label_lastname: getTranslation('tools.common.form.lastname'),
-//   label_corporate: getTranslation('tools.corporate.corporate'),
-//   label_continue: getTranslation('common.tools.continue'),
-//   label_confirmated: "Confirmado",
-//   label_pending: "Pendiente",
-//   label_confirm: getTranslation('common.confirm'),
-//   label_consult: getTranslation('common.tools.form.button-consult'),
-//   label_consulting: getTranslation('common.tools.form.button-consulting'),
-//   label_panel_title: getTranslation('common.tools.general-information'),
-//   label_error: getTranslation('common.tools.error'),
-//   label_no_benefit: "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.",
-//   label_no_seats_available: getTranslation('tools.corporate.no-seats-available'),
-//   label_1_panel: getTranslation('tools.corporate.panel-text-1'),
-//   label_2_panel: getTranslation('tools.corporate.panel-text-2'),
-//   label_3_panel: getTranslation('tools.corporate.panel-text-3'),
-//   label_4_panel: getTranslation('tools.corporate.panel-text-4'),
-//   label_found_first: getTranslation('tools.corporate.found-first'),
-//   label_found_last: getTranslation('tools.corporate.found-last'),
-//   label_empty_top: getTranslation('common.tools.here-related'),
-//   label_no_reservations: getTranslation('common.tools.no-reservations-registered'),
-//   label_check_all: getTranslation('common.tools.select-all'),
-//   label_tickets: getTranslation('common.tools.tickets'),
-//   label_footer_text: getTranslation('tools.corporate-priority.footer-text'),
-//   label_am_flight: getTranslation('tools.corporate-priority.am-flight'),
-//   label_am_prefered: getTranslation('tools.corporate-priority.am-prefered'),
-//   label_of: getTranslation('tools.corporate-priority.of'),
-//   label_standard_seat: getTranslation('tools.corporate-priority.standard-seat'),
-//   label_priority_landing: getTranslation('tools.corporate-priority.priority-landing'),
-//   label_priority_ubication: getTranslation('tools.corporate-priority.priority-ubication'),
-//   label_passenger: getTranslation('common.tools.passenger'),
-//   label_seats: getTranslation('common.tools.seats'),
-//   label_next: getTranslation('common.next'),
-//   label_select_seat: getTranslation('tools.corporate-priority.select-seat'),
-//   label_segment: getTranslation('common.tools.segment'),
-//   label_save: getTranslation('tools.corporate-priority.save-leave'),
-//   label_no_seat: getTranslation('tools.corporate-priority.no-seat'),
-//   label_select_segment: getTranslation('tools.corporate-priority.select-segment'),
-//   label_success_toast: getTranslation('tools.corporate-priority.success-corporate'),
-//   label_invalid_pnr: getTranslation('common.tools.form-errors.invalid-pnr'),
-//   label_invalid_ticket_number: getTranslation('common.tools.form-errors.invalid-ticket-number'),
-//   label_invalid_value: getTranslation('common.tools.form-errors.invalid-value'),
-//   label_seat_no_preferent: "El asiento asignado no es aplicable para el beneficio ¿Necesitas cambiar el asiento?",
-//   labe_current_preferred: "Tu reservación ya cuenta con el beneficio de asientos preferentes, ¿Necesitas cambiar el asiento?",
-//   label_seat_is_preferent: "Ya cuentas con un asiento preferente asignado ¿Necesitas cambiar el asiento?",
-//   label_price: "Costo",
-//   label_window: "Ventana",
-//   label_aisle: "Pasillo",
-//   label_middle: "Medio",
-//   label_agree_terms: "Acepta los términos y condiciones de cambiar el asiento",
-//    label_change_success: "Se ha realizado de manera exitosa el cambio.",
-// };
-
 const trads = {
-  label_tool_name: "Corporate Priority",
-  label_tool_description:
-    "Aquí podras solicitar el waiver de asientos para tu reserva",
-  label_need_help: "¿Necesitas ayuda",
-  label_back: "Regresar",
-  label_name: "Nombre",
-  label_status: "Estatus",
-  label_origin: "Origen",
-  label_destiny: "Destino",
-  label_date: "Fecha",
-  label_time: "Hora",
-  label_seat: "Asiento",
-  label_class: "Clase",
-  label_type: "Tipo",
-  label_pnr: "AM PNR",
-  label_ticket: "Boleto",
-  label_lastname: "Apellido (s)",
-  label_corporate: "St. Asiento",
-  label_continue: "Continuar",
-  label_confirmated: "Confirmado",
-  label_pending: "Pendiente",
-  label_confirm: "Confirmar",
-  label_consult: "Consultar",
-  label_consulting: "Consultando",
-  label_panel_title: "Información general",
-  label_error: "Error",
-  label_no_benefit:
-    "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority.",
-  label_no_seats_available:
-    "El segmento seleccionado no cuenta con asientos preferentes disponibles para otorgar el beneficio.",
-  label_1_panel:
-    "El beneficiario solo es aplicable para asientos preferenciales.",
-  label_2_panel:
-    "En caso de no contar con asientos preferentes disponibles no es posible otorgar el beneficio.",
-  label_3_panel: "Cualquier uso indebido este sujeto a débito.",
-  label_4_panel:
-    "Si cuentas con un asiento pagado previamente no se realizará ningún reembolso por este medio.",
-  label_found_first: "Se encuentran ",
-  label_found_last: " en esta reservación.",
-  label_empty_top:
-    "Aquí podrá visualizar los boletos relacionados a su reservación",
-  label_no_reservations: "No hay reservaciones registradas.",
-  label_check_all: "Seleccionar todos",
-  label_tickets: "boletos",
-  label_footer_text: "Continuar con la asignación del asiento",
-  label_am_flight: "Vuelo AM",
-  label_am_preferred: "Preferred",
-  label_of: "de",
-  label_standard_seat: "Asiento estándar",
-  label_priority_landing: "Desembarque prioritario",
-  label_priority_ubication: "Ubicación prioritaria",
-  label_passenger: "Pasajero",
-  label_seats: "Asientos",
-  label_next: "Siguiente",
-  label_select_seat: "Selecciona asiento para este pasajero",
-  label_segment: "Segmento",
-  label_save: "Guardar y salir",
-  label_no_seat: "Sin asiento",
-  label_select_segment: "Selecciona asiento para este pasajero",
-  label_success_toast:
-    "El beneficio de Corporate Priority se otorgó de forma exitosa",
-  label_invalid_pnr: "PNR inválido",
-  label_invalid_ticket_number: "Número de boleto inválido",
-  label_invalid_value: "Valor inválido",
-  label_condonate: "Condonar",
-  label_seat_condonate: "Desea condonar el asiento",
-  label_seat_yes_condonate: "Si condonar",
-  label_seat_no_condonate: "No condonar",
-  label_seat_no_preferent:
-    "El asiento asignado no es aplicable para el beneficio ¿Necesitas cambiar el asiento?",
-  labe_current_preferred:
-    "Tu reservación ya cuenta con el beneficio de asientos preferentes, ¿Necesitas cambiar el asiento?",
-  label_seat_is_preferent:
-    "Ya cuentas con un asiento preferente asignado ¿Necesitas cambiar el asiento?",
-  label_price: "Costo",
-  label_window: "Ventana",
-  label_aisle: "Pasillo",
-  label_middle: "Medio",
-  label_agree_terms: "Acepta los términos y condiciones de cambiar el asiento",
-  label_change_success: "Se ha realizado de manera exitosa el cambio.",
+  label_tool_name: getTranslation('tools.corporate-priority.title'),
+  label_tool_description: getTranslation('tools.corporate-priority.description'),
+  label_need_help: getTranslation('navbar.common.need-help'),
+  label_back: getTranslation('common.tools.back'),
+
+  label_name: getTranslation('common.tools.ticket.name'),
+  label_status: getTranslation('common.tools.ticket.status'),
+  label_origin: getTranslation('common.tools.ticket.origin'),
+  label_destiny: getTranslation('common.tools.ticket.destination'),
+  label_date: getTranslation('common.tools.ticket.date'),
+  label_time: getTranslation('common.tools.ticket.time'),
+  label_seat: getTranslation('common.tools.ticket.seat'),
+  label_class: getTranslation('common.tools.ticket.class'),
+  label_type: getTranslation('common.tools.ticket.type'),
+
+  label_pnr: getTranslation('common.tools.form.AMPNR'),
+  label_ticket: getTranslation('common.tools.form.ticket'),
+  label_lastname: getTranslation('common.tools.form.lastname'),
+  label_corporate: getTranslation('common.tools.ticket.status-seat'),
+
+  label_continue: getTranslation('common.tools.continue'),
+  label_confirmated: getTranslation('common.confirmed'),
+  label_pending: getTranslation('common.pending'),
+  label_confirm: getTranslation('common.confirm'),
+
+  label_consult: getTranslation('common.tools.form.button-consult'),
+  label_consulting: getTranslation('common.tools.form.button-consulting'),
+
+  label_panel_title: getTranslation('common.tools.general-information'),
+  label_error: getTranslation('common.tools.error'),
+  label_no_benefit: getTranslation('common.tools.error.not-corporate'),
+
+  label_no_seats_available: getTranslation('tools.corporate-priority.no-seats-available'),
+
+  label_1_panel: getTranslation('tools.corporate-priority.panel-text-1'),
+  label_2_panel: getTranslation('tools.corporate-priority.panel-text-2'),
+  label_3_panel: getTranslation('tools.corporate-priority.panel-text-3'),
+  label_4_panel: getTranslation('tools.corporate-priority.panel-text-4'),
+
+  label_found_first: getTranslation('tools.corporate-priority.found-first'),
+  label_found_last: getTranslation('tools.corporate-priority.found-last'),
+
+  label_empty_top: getTranslation('common.tools.here-related'),
+  label_no_reservations: getTranslation('common.tools.no-reservations-registered'),
+  label_check_all: getTranslation('common.tools.select-all'),
+  label_tickets: getTranslation('common.tools.tickets'),
+
+  label_footer_text: getTranslation('tools.corporate-priority.footer-text'),
+
+  label_am_flight: getTranslation('tools.corporate-priority.am-flight'),
+  label_am_preferred: getTranslation('tools.corporate-priority.am-prefered'),
+  label_of: getTranslation('common.tools.of'),
+
+  label_standard_seat: getTranslation('tools.corporate-priority.standard-seat'),
+  label_priority_landing: getTranslation('tools.corporate-priority.priority-landing'),
+  label_priority_ubication: getTranslation('tools.corporate-priority.priority-ubication'),
+
+  label_passenger: getTranslation('common.tools.passenger'),
+  label_seats: getTranslation('common.tools.seats'),
+
+  label_next: getTranslation('common.next'),
+
+  // Esta label esta repetida revisar
+  label_select_seat: getTranslation('tools.corporate-priority.select-segment'),
+
+  label_segment: getTranslation('common.tools.segment'),
+  label_save: getTranslation('tools.corporate-priority.save-leave'),
+
+  label_no_seat: getTranslation('tools.corporate-priority.no-seat'),
+  label_select_segment: getTranslation('tools.corporate-priority.select-segment'),
+
+  label_success_toast: getTranslation('tools.corporate-priority.success-corporate'),
+
+  label_invalid_pnr: getTranslation('common.tools.form-errors.invalid-pnr'),
+  label_invalid_ticket_number: getTranslation('common.tools.form-errors.invalid-ticket-number'),
+  label_invalid_value: getTranslation('common.tools.form-errors.invalid-value'),
+
+  label_condonate: getTranslation('tools.corporate-priority.condonate'),
+  label_seat_condonate: getTranslation('tools.corporate-priority.seat-condonate'),
+  label_seat_yes_condonate: getTranslation('tools.corporate-priority.seat-yes-condonate'),
+  label_seat_no_condonate: getTranslation('tools.corporate-priority.seat-no-condonate'),
+
+  label_seat_no_preferent: getTranslation('tools.corporate-priority.seat-no-preferent'),
+
+  //estaba mal escrito 'labl', ubicar label y corregir
+  label_current_preferred: getTranslation('tools.corporate-priority.current-preferred'),
+
+  label_seat_is_preferent: getTranslation('tools.corporate-priority.seat-is-preferent'),
+
+  label_price: getTranslation('tools.corporate-priority.price'),
+  label_window: getTranslation('tools.corporate-priority.window'),
+  label_aisle: getTranslation('tools.corporate-priority.aisle'),
+  label_middle: getTranslation('tools.corporate-priority.middle'),
+  label_agree_terms: getTranslation('tools.corporate-priority.agree-terms'),
+  label_change_success: getTranslation('tools.corporate-priority.change-success'),
 };
 
 const alert = (message) => {
@@ -410,7 +357,7 @@ const handleCloseMap = (showToast, segment) => {
   }
 };
 
-onMounted(() => {});
+onMounted(() => { });
 
 const readyCount = computed(
   () =>
@@ -496,33 +443,21 @@ watch(legsToMap, (list) => {
         </button>
       </p>
     </GeneralToast>
-    <ToolWrapper
-      class="mb-40"
-      :tool="trads.label_tool_name"
-      :description="trads.label_tool_description"
-      @goBack="
-        () => {
-          step = 'panel';
-        }
-      "
-      @handleNeedHelp="
+    <ToolWrapper class="mb-40" :tool="trads.label_tool_name" :description="trads.label_tool_description" @goBack="
+      () => {
+        step = 'panel';
+      }
+    " @handleNeedHelp="
         () => {
           alert('Help is on the way!');
         }
-      "
-    >
-      <ToolPanel
-        v-if="step === 'panel'"
-        class="mt-[42px] lg:mt-[56px]"
-        :textButton="trads.label_continue"
-        :title="trads.label_panel_title"
-        icon="InputTextIcon"
-        @onClick="
+      ">
+      <ToolPanel v-if="step === 'panel'" class="mt-[42px] lg:mt-[56px]" :textButton="trads.label_continue"
+        :title="trads.label_panel_title" icon="InputTextIcon" @onClick="
           () => {
             step = 'form';
           }
-        "
-      >
+        ">
         <div class="hidden sm:grid grid-cols-2 gap-5 text-[10px] md:text-xs">
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
@@ -547,9 +482,7 @@ watch(legsToMap, (list) => {
             </p>
           </div>
         </div>
-        <div
-          class="grid sm:hidden grid-cols-1 gap-5 text-[10px] md:text-xs my-8"
-        >
+        <div class="grid sm:hidden grid-cols-1 gap-5 text-[10px] md:text-xs my-8">
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
             <p>
@@ -574,101 +507,45 @@ watch(legsToMap, (list) => {
           </div>
         </div>
       </ToolPanel>
-      <div
-        id="ticket-form"
-        v-else-if="step === 'form'"
-        class="flex flex-col gap-5 mt-10"
-      >
-        <PNRForm
-          :ticketForm="ticketForm"
-          :trads="trads"
-          @update:ticketForm="
-            (val) => {
-              ticketForm.value = onUpdateTicketForm(val);
-            }
-          "
-          @handleSend="sendForm"
-          :isLoading="isFormLoading"
-        />
+      <div id="ticket-form" v-else-if="step === 'form'" class="flex flex-col gap-5 mt-10">
+        <PNRForm :ticketForm="ticketForm" :trads="trads" @update:ticketForm="
+          (val) => {
+            ticketForm.value = onUpdateTicketForm(val);
+          }
+        " @handleSend="sendForm" :isLoading="isFormLoading" />
 
-        <NotificationBar
-          v-if="notificationError"
-          variant="error"
-          @close="() => (notificationError = false)"
-        >
+        <NotificationBar v-if="notificationError" variant="error" @close="() => (notificationError = false)">
           {{ notificationError }}
         </NotificationBar>
 
-        <EmptyStateIllustration
-          v-if="!segments.length"
-          data-cy="empty-ticket-card"
-          :description="trads.label_no_reservations"
-          :topText="trads.label_empty_top"
-          :isLoading="isLoading"
-        />
-        <SeatsTicket
-          v-if="segments.length"
-          :passenger="passenger"
-          :segments="segments"
-          :selected-ids="selectedIdsArr"
-          :checkLabel="trads.label_check_all"
-          :selectAll="true"
-          :trads="trads"
-          :clid="clid"
-          @toggle-all="handleToggleAll"
-          @toggle="handleToggle"
-        />
+        <EmptyStateIllustration v-if="!segments.length" data-cy="empty-ticket-card"
+          :description="trads.label_no_reservations" :topText="trads.label_empty_top" :isLoading="isLoading" />
+        <SeatsTicket v-if="segments.length" :passenger="passenger" :segments="segments" :selected-ids="selectedIdsArr"
+          :checkLabel="trads.label_check_all" :selectAll="true" :trads="trads" :clid="clid"
+          @toggle-all="handleToggleAll" @toggle="handleToggle" />
       </div>
     </ToolWrapper>
-    <footer
-      v-if="step == 'form' && segments.length"
-      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 bg-white"
-    >
-      <div
-        class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
-      >
+    <footer v-if="step == 'form' && segments.length"
+      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 bg-white">
+      <div class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center">
         <p class="text-xs sm:text-base">
           {{ trads.label_footer_text }}
         </p>
-        <Button
-          class="m-5"
-          variant="secondary"
-          size="lg"
-          @click="goToSeats"
-          :disabled="!canContinue"
-          >{{ continueLabel }}</Button
-        >
+        <Button class="m-5" variant="secondary" size="lg" @click="goToSeats" :disabled="!canContinue">{{ continueLabel
+          }}</Button>
       </div>
     </footer>
   </section>
 
-  <Transition
-    enter-active-class="transform transition ease-out duration-500"
-    enter-from-class="translate-y-full opacity-0"
-    enter-to-class="translate-y-0 opacity-100"
-    leave-active-class="transform transition ease-in duration-500"
-    leave-from-class="translate-y-0 opacity-100"
-    leave-to-class="translate-y-full opacity-0"
-  >
-    <SeatsMapLayout
-      v-if="step === 'seatsMap'"
-      :isStandBy="isStandBy"
-      :formPayload="ticketForm"
-      :seatMapPayload="seatMapPayload"
-      @updateSeatMap="updateSeatMap"
-      @close="handleCloseMap"
-      @addSeat="handleSeat"
-      @delete="deleteSelection"
-      @update-agree-terms="onUpdateAgreeTerms"
-      :assignSeat="handleAssignSeats"
-      :trads="trads"
-      :passenger="passenger"
-      :seatsMapInfo="seatMapCache"
-      :segments="legsToMap"
-      :allSeatsAssigned="allSeatsAssigned"
-      @updateReservation="updateReservation"
-      :isChangedSeat="isChangedSeat"
-    />
+  <Transition enter-active-class="transform transition ease-out duration-500"
+    enter-from-class="translate-y-full opacity-0" enter-to-class="translate-y-0 opacity-100"
+    leave-active-class="transform transition ease-in duration-500" leave-from-class="translate-y-0 opacity-100"
+    leave-to-class="translate-y-full opacity-0">
+    <SeatsMapLayout v-if="step === 'seatsMap'" :isStandBy="isStandBy" :formPayload="ticketForm"
+      :seatMapPayload="seatMapPayload" @updateSeatMap="updateSeatMap" @close="handleCloseMap" @addSeat="handleSeat"
+      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :assignSeat="handleAssignSeats" :trads="trads"
+      :passenger="passenger" :seatsMapInfo="seatMapCache" :segments="legsToMap" :allSeatsAssigned="allSeatsAssigned"
+      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat" />
   </Transition>
 </template>
 
