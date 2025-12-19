@@ -21,7 +21,7 @@ import CircleLoader from "../Components/CircleLoader.vue";
 const step = ref("panel");
 const isLoading = ref(false);
 const isFormLoading = ref(false);
-const errorNotification = ref(false);
+const isChangedSeat = ref(false);
 const errorModal = ref(false);
 const passenger = ref({});
 const selected = ref([]);
@@ -394,11 +394,12 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
   if (shouldUnset) {
     const { newSeat, ...rest } = curr;
     segments.value[i] = rest;
+     isChangedSeat.value = false;
   } else {
     segments.value[i] = { ...curr, newSeat: seat };
+    isChangedSeat.value = true;
   }
 
-  console.log(segments.value);
 };
 
 const handleCloseMap = (showToast, segment) => {
@@ -665,6 +666,7 @@ watch(
       :segments="legsToMap"
       :allSeatsAssigned="allSeatsAssigned"
       @updateReservation="updateReservation"
+      :isChangedSeat="isChangedSeat"
     />
   </Transition>
   <GeneralToast
