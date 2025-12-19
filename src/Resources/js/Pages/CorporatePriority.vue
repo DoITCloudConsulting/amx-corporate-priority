@@ -220,7 +220,7 @@ const sendForm = async () => {
       err?.response?.data?.message || err?.message || "Error inesperado.";
   } finally {
     isLoading.value = false;
-    isFormLoading.value = true;
+    isFormLoading.value = false;
   }
 };
 
