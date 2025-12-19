@@ -13,7 +13,7 @@ import {
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
 import axios from "axios";
-// import { getTranslation } from '@shared/getTranslation'
+import { getTranslation } from '@shared/getTranslation'
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
 
@@ -448,10 +448,10 @@ watch(legsToMap, (list) => {
         step = 'panel';
       }
     " @handleNeedHelp="
-        () => {
-          alert('Help is on the way!');
-        }
-      ">
+      () => {
+        alert('Help is on the way!');
+      }
+    ">
       <ToolPanel v-if="step === 'panel'" class="mt-[42px] lg:mt-[56px]" :textButton="trads.label_continue"
         :title="trads.label_panel_title" icon="InputTextIcon" @onClick="
           () => {
@@ -532,7 +532,7 @@ watch(legsToMap, (list) => {
           {{ trads.label_footer_text }}
         </p>
         <Button class="m-5" variant="secondary" size="lg" @click="goToSeats" :disabled="!canContinue">{{ continueLabel
-          }}</Button>
+        }}</Button>
       </div>
     </footer>
   </section>
