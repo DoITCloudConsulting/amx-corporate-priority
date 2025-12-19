@@ -29,7 +29,7 @@ const segments = ref([]);
 const stationNumber = ref("");
 const clid = ref("");
 const notificationError = ref(false);
-const isToastOpen = ref(false);
+const isToastOpen = ref(true);
 const allSeatsAssigned = ref(false);
 const isStandBy = ref();
 const ticketForm = ref({
@@ -197,6 +197,8 @@ const trads = {
 const alert = (message) => {
   window.alert(message);
 };
+
+console.log(window.location);
 
 const sendForm = async () => {
   isLoading.value = true;
@@ -491,6 +493,14 @@ watch(
 
 <template>
   <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
+    <GeneralToast :is-open="isToastOpen" @close="isToastOpen = false">
+      <p class="text-white">
+        El beneficio de Corporate Priority se otorgó de forma exitosa.
+        <button type="button" class="text-white underline">
+          Descargar el PDF
+        </button>
+      </p>
+    </GeneralToast>
     <ToolWrapper
       class="mb-40"
       :tool="trads.label_tool_name"
@@ -663,11 +673,6 @@ watch(
       @updateReservation="updateReservation"
     />
   </Transition>
-  <GeneralToast
-    v-if="isToastOpen"
-    :text="trads.label_success_toast"
-    @close="isToastOpen = false"
-  />
 </template>
 
 <style scoped>

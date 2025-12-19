@@ -1,4 +1,5 @@
 import axios from "axios";
+import { usePage } from "@inertiajs/vue3";
 
 class CorporatePriorityService {
   reservationSeatMap = {};
@@ -153,7 +154,7 @@ class CorporatePriorityService {
 
     return data;
   }
-  async downloadPDF() {
+  async downloadPDF(segments) {
     const confirmedSegments = [];
     const pendingSegments = [];
 
@@ -172,21 +173,34 @@ class CorporatePriorityService {
       }
     });
 
-    localStorage.setItem(
-      "cp-case-data",
-      JSON.stringify({
-        reservation: this.reservation.pnr,
-        passengerName: `${this.reservation.passenger.lastName} / ${this.reservation.passenger.firstName}`,
-        confirmedSegments,
-        pendingSegments,
-      })
-    );
+    /*      $reservation = $request->reservation;
+        $userName  = $request->userName;
+        $agency = $request->agency;
+        $corporate = $request->corporate;
+        $passengerName = $request->passengerName;
+        $confirmedSegments = $request->confirmedSegments;
+        $pendingSegments = $request->pendingSegments;
+ */
+
+    const userName = usePage().props?.auth?.user?.name;
+
+    console.log(usePage().props);
+    console.log(usePage().props?.auth);
+    console.log(usePage().props?.auth?.user);
+
+    const passenger = this.reservation.passenger;
 
     const response = await axios.post(
       route("pdf"),
       {
         fileName: "Corporate_Priority",
-        domain: window.location.origin,
+        reservation: this.reservation.pnr,
+        userName,
+        agency: "" || "Agencia de prueba",
+        corporate: "" || "Corporativo de prueba",
+        passengerName: `${passenger.lastName} / ${passenger.firstName}`,
+        confirmedSegments,
+        pendingSegments,
       },
       {
         responseType: "blob",
