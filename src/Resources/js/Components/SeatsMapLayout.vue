@@ -23,16 +23,19 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  isChangedSeat: {
+    type: Boolean
+  }
 });
 
 const aircraftType = {
   "79M": ["A", "B", "C", "|", "D", "E", "F"],
   "7M9": ["A", "B", "C", "|", "D", "E", "F"],
   "7M8": ["A", "B", "C", "|", "D", "E", "F"],
-  E90: ["A", "B", "|", "C", "D"],
+  "E90": ["A", "B", "|", "C", "D"],
   "E-190": ["A", "B", "|", "C", "D"],
   "7S8": ["A", "B", "|", "C", "D"],
-  789: ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
+  "789": ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
 };
 
 const emit = defineEmits([
@@ -50,6 +53,67 @@ const currentSegment = ref(0);
 const modalOpenBySegment = reactive({});
 const initialHasAnySeatByIndex = reactive({});
 const canContinueWithNextSegment = ref(false);
+const agreeTermsBySegment = reactive({});
+const stageNameBySegment = reactive({});
+
+const initStageNames = (segments = []) => {
+  segments.forEach((_, idx) => {
+    if (stageNameBySegment[idx] === undefined) {
+      stageNameBySegment[idx] = "";
+    }
+  });
+};
+
+const stageNameForCurrentSegment = computed({
+  get() {
+    return stageNameBySegment[currentSegment.value] || "";
+  },
+  set(value) {
+    stageNameBySegment[currentSegment.value] = value;
+  },
+});
+
+
+watch(
+  () => props.segments,
+  (segments) => {
+    initStageNames(segments);
+  },
+  { immediate: true }
+);
+
+
+const initAgreeTerms = (segments = []) => {
+  segments.forEach((_, idx) => {
+    if (agreeTermsBySegment[idx] === undefined) {
+      agreeTermsBySegment[idx] = false;
+    }
+  });
+};
+
+watch(
+  () => props.segments,
+  (segments) => initAgreeTerms(segments),
+  { immediate: true }
+);
+
+watch(agreeTermsBySegment, () => {
+  props.segments.forEach((segment, idx) => {
+    segment.agreeTerms = agreeTermsBySegment[idx];
+  });
+}, { deep: true });
+
+
+const agreeTermsForCurrentSegment = computed({
+  get() {
+    return agreeTermsBySegment[currentSegment.value] ?? false;
+  },
+  set(value) {
+    agreeTermsBySegment[currentSegment.value] = value;
+  },
+});
+
+
 
 const modalLabel = ref();
 
@@ -124,13 +188,6 @@ const currentSeatMap = computed(() => {
   return [];
 });
 
-const agreeTerms = computed({
-  get: () => !!currentSegmentInfo.value?.agreeTerms,
-  set: (val) => {
-    emit("update-agree-terms", { index: currentSegment.value, value: val });
-  },
-});
-
 const corporateSeatCode = computed(
   () => currentSegmentInfo.value?.seats?.[0]?.seatCode || null
 );
@@ -182,12 +239,6 @@ const assignSeat = async () => {
   }
 };
 
-const modalIsOpenForCurrent = computed(() => {
-  const key = currentSegment.value;
-  console.log(modalOpenBySegment[key]);
-  return !!modalOpenBySegment[key];
-});
-
 watchEffect(() => {
   modalLabel.value = hasCorporateSeatInMap.value
     ? props.trads.label_seat_is_preferent
@@ -195,6 +246,7 @@ watchEffect(() => {
 });
 
 const seatType = ref(props.trads.label_am_preferred);
+
 const segmentCount = computed(
   () =>
     `${currentSegment.value + 1} ${props.trads.label_of} ${
@@ -221,19 +273,9 @@ const handleSelect = (index) => {
 };
 
 const handleSelectSeat = (seat) => {
-  console.log(seat);
+  
   if (!seat) return;
   emit("addSeat", seat, currentSegment.value);
-};
-
-const handleAsignSeat = () => {
-  const anyChange = props.segments.some((seg) => isSeatChange(seg));
-
-  if (!anyChange || !currentSegmentInfo.value?.agreeTerms) {
-    emit("close");
-    return;
-  }
-  emit("asignSeat");
 };
 
 const handleDelete = (s) => {
@@ -252,10 +294,10 @@ const isCorporateSegment = computed(() => {
 
 const canSave = computed(() => {
   if (isCorporateSegment.value && !initialHadAnySeat.value) {
-    return true;
+    return agreeTermsForCurrentSegment.value;
   }
   if (newSeatExists.value) {
-    return true;
+    return agreeTermsForCurrentSegment.value;
   }
   if (newSeatExists.value && initialHadAnySeat.value) {
     return true;
@@ -263,23 +305,6 @@ const canSave = computed(() => {
 
   return !!currentSegmentInfo.value?.agreeTerms;
 });
-
-const isSeatChange = (seg) => {
-  if (!seg?.newSeat) return false;
-
-  const newCode = seg.newSeat?.seatCode ?? null;
-  if (!newCode) return false;
-
-  const originalFirst =
-    Array.isArray(seg.seats) && seg.seats.length
-      ? seg.seats[0]?.seatCode
-      : null;
-  if (!originalFirst) return true;
-
-  if (originalFirst !== newCode) return true;
-
-  return false;
-};
 
 watch(props.segments, () => {
   console.log(props.segments);
@@ -391,7 +416,7 @@ const {
 
       <div
         v-if="stageName"
-        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[100] flex flex-col items-center justify-center"
+        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[90] flex flex-col items-center justify-center"
       >
         <InfoSeatModal
           v-if="stageName === 'condonate'"
@@ -445,7 +470,7 @@ const {
             <CheckInput
               class="text-xs"
               :label="currentModalStage.checkbox.text"
-              v-model="currentModalStage.checkbox.agreeTerms"
+              v-model="agreeTermsForCurrentSegment"
             />
             <div class="flex flex-col gap-4">
               <LinkButton
@@ -456,9 +481,9 @@ const {
               <Button
                 @click="assignSeat"
                 width="full"
-                :disabled="
-                  !currentModalStage.checkbox.agreeTerms || isAssigningSeat
-                "
+                :disabled="!agreeTermsForCurrentSegment || !isChangedSeat"
+
+
               >
                 <div
                   v-if="isAssigningSeat"

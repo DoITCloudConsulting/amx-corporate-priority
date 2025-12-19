@@ -16,11 +16,11 @@ import axios from "axios";
 // import { getTranslation } from '@shared/getTranslation'
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
-import CircleLoader from "../Components/CircleLoader.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
-const errorNotification = ref(false);
+const isFormLoading = ref(false);
+const isChangedSeat = ref(false);
 const errorModal = ref(false);
 const passenger = ref({});
 const selected = ref([]);
@@ -29,7 +29,7 @@ const segments = ref([]);
 const stationNumber = ref("");
 const clid = ref("");
 const notificationError = ref(false);
-const isToastOpen = ref(false);
+const isToastOpen = ref(true);
 const allSeatsAssigned = ref(false);
 const isStandBy = ref();
 const ticketForm = ref({
@@ -198,8 +198,11 @@ const alert = (message) => {
   window.alert(message);
 };
 
+console.log(window.location);
+
 const sendForm = async () => {
   isLoading.value = true;
+  isFormLoading.value = true;
   segments.value = [];
   notificationError.value = null;
   try {
@@ -211,13 +214,12 @@ const sendForm = async () => {
     }
 
     updateReservation(res);
-
-    segments.value.forEach(ensureSeatMap);
   } catch (err) {
     notificationError.value =
       err?.response?.data?.message || err?.message || "Error inesperado.";
   } finally {
     isLoading.value = false;
+    isFormLoading.value = false;
   }
 };
 
@@ -352,8 +354,7 @@ const ensureSeatMap = async (seg) => {
 
 const updateSeatMap = (seg, newMap) => {
   const key = segKey(seg);
-  console.log("Segment key ", key);
-  console.log("Segment map ", newMap);
+
   seatMapCache[key] = newMap;
 
   console.log(seatMapStatus);
@@ -391,11 +392,11 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
   if (shouldUnset) {
     const { newSeat, ...rest } = curr;
     segments.value[i] = rest;
+    isChangedSeat.value = false;
   } else {
     segments.value[i] = { ...curr, newSeat: seat };
+    isChangedSeat.value = true;
   }
-
-  console.log(segments.value);
 };
 
 const handleCloseMap = (showToast, segment) => {
@@ -480,17 +481,21 @@ function onUpdateAgreeTerms({ index, value }) {
   segments.value[i] = { ...curr, agreeTerms: value };
 }
 
-watch(
-  legsToMap,
-  (list) => {
-    list.forEach(ensureSeatMap);
-  },
-  { immediate: true }
-);
+watch(legsToMap, (list) => {
+  list.forEach(ensureSeatMap);
+});
 </script>
 
 <template>
   <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
+    <GeneralToast :is-open="isToastOpen" @close="isToastOpen = false">
+      <p class="text-white">
+        El beneficio de Corporate Priority se otorgó de forma exitosa.
+        <button type="button" class="text-white underline">
+          Descargar el PDF
+        </button>
+      </p>
+    </GeneralToast>
     <ToolWrapper
       class="mb-40"
       :tool="trads.label_tool_name"
@@ -583,6 +588,7 @@ watch(
             }
           "
           @handleSend="sendForm"
+          :isLoading="isFormLoading"
         />
 
         <NotificationBar
@@ -661,13 +667,9 @@ watch(
       :segments="legsToMap"
       :allSeatsAssigned="allSeatsAssigned"
       @updateReservation="updateReservation"
+      :isChangedSeat="isChangedSeat"
     />
   </Transition>
-  <GeneralToast
-    v-if="isToastOpen"
-    :text="trads.label_success_toast"
-    @close="isToastOpen = false"
-  />
 </template>
 
 <style scoped>
