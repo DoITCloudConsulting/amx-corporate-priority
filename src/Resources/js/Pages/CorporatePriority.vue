@@ -16,7 +16,6 @@ import axios from "axios";
 // import { getTranslation } from '@shared/getTranslation'
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
-import CircleLoader from "../Components/CircleLoader.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);

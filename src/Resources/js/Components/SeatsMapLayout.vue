@@ -53,6 +53,67 @@ const currentSegment = ref(0);
 const modalOpenBySegment = reactive({});
 const initialHasAnySeatByIndex = reactive({});
 const canContinueWithNextSegment = ref(false);
+const agreeTermsBySegment = reactive({});
+const stageNameBySegment = reactive({});
+
+const initStageNames = (segments = []) => {
+  segments.forEach((_, idx) => {
+    if (stageNameBySegment[idx] === undefined) {
+      stageNameBySegment[idx] = "";
+    }
+  });
+};
+
+const stageNameForCurrentSegment = computed({
+  get() {
+    return stageNameBySegment[currentSegment.value] || "";
+  },
+  set(value) {
+    stageNameBySegment[currentSegment.value] = value;
+  },
+});
+
+
+watch(
+  () => props.segments,
+  (segments) => {
+    initStageNames(segments);
+  },
+  { immediate: true }
+);
+
+
+const initAgreeTerms = (segments = []) => {
+  segments.forEach((_, idx) => {
+    if (agreeTermsBySegment[idx] === undefined) {
+      agreeTermsBySegment[idx] = false;
+    }
+  });
+};
+
+watch(
+  () => props.segments,
+  (segments) => initAgreeTerms(segments),
+  { immediate: true }
+);
+
+watch(agreeTermsBySegment, () => {
+  props.segments.forEach((segment, idx) => {
+    segment.agreeTerms = agreeTermsBySegment[idx];
+  });
+}, { deep: true });
+
+
+const agreeTermsForCurrentSegment = computed({
+  get() {
+    return agreeTermsBySegment[currentSegment.value] ?? false;
+  },
+  set(value) {
+    agreeTermsBySegment[currentSegment.value] = value;
+  },
+});
+
+
 
 const modalLabel = ref();
 
@@ -233,10 +294,10 @@ const isCorporateSegment = computed(() => {
 
 const canSave = computed(() => {
   if (isCorporateSegment.value && !initialHadAnySeat.value) {
-    return true;
+    return agreeTermsForCurrentSegment.value;
   }
   if (newSeatExists.value) {
-    return true;
+    return agreeTermsForCurrentSegment.value;
   }
   if (newSeatExists.value && initialHadAnySeat.value) {
     return true;
@@ -355,7 +416,7 @@ const {
 
       <div
         v-if="stageName"
-        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[100] flex flex-col items-center justify-center"
+        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[90] flex flex-col items-center justify-center"
       >
         <InfoSeatModal
           v-if="stageName === 'condonate'"
@@ -409,7 +470,7 @@ const {
             <CheckInput
               class="text-xs"
               :label="currentModalStage.checkbox.text"
-              v-model="currentModalStage.checkbox.agreeTerms"
+              v-model="agreeTermsForCurrentSegment"
             />
             <div class="flex flex-col gap-4">
               <LinkButton
@@ -420,9 +481,9 @@ const {
               <Button
                 @click="assignSeat"
                 width="full"
-                :disabled="
-                  !currentModalStage.checkbox.agreeTerms || !isChangedSeat
-                "
+                :disabled="!agreeTermsForCurrentSegment || !isChangedSeat"
+
+
               >
                 <div
                   v-if="isAssigningSeat"
