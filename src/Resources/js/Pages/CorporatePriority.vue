@@ -12,18 +12,20 @@ import {
 } from "am-ui-package";
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
+import { usePage } from "@inertiajs/vue3";
+import Cookies from "js-cookie";
 import axios from "axios";
 import { getTranslation } from '@shared/getTranslation'
+import { DialogRoot } from "radix-vue";
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
-import { corporatePriorityService } from "../../services/CorporatePriorityService";
+import Chat from "@/Components/Modals/Chat.vue";
+import ChatWidget from "@/Components/Modals/Chat/ChatWidget.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
 const isFormLoading = ref(false);
 const isChangedSeat = ref(false);
-const errorModal = ref(false);
 const passenger = ref({});
-const selected = ref([]);
 const legs = ref([]);
 const segments = ref([]);
 const stationNumber = ref("");
@@ -37,7 +39,38 @@ const ticketForm = ref({
   numberTicket: "",
   lastname: "",
 });
+const isIataValidationOpen = ref(true)
+const openOneTime= ref(false);
+const isChatOpen = ref(false);
+const user = usePage().props?.auth?.user;
+const language = Cookies.get("USRLOC").split("-")[1]
+const chatData = ref({
+                iata: "",
+                name: user ? user.first_name : "",
+                lastName: user ? user.last_name : "",
+                email: user ? user.email : "",
+                type: "Waivers",
+                error: "",
+            })
+const amPNR = ref()
 
+
+const toggleIATAValidate = () => {
+  isIataValidationOpen.value = !isIataValidationOpen.value
+};
+
+const activeChat = () => {
+  if (openOneTime.value) {
+    openTwice();
+  }
+  isChatOpen.value = true;
+  openOneTime.value = true;
+}
+
+const openTwice = () => {
+  const element = document.getElementById("widget-container");
+  element.classList.add("visible");
+}
 
 const formatPassengerName = (p = {}) =>
   p.firstName && p.lastName
@@ -175,8 +208,10 @@ const updateReservation = (reservation) => {
   };
   legs.value = reservation.segments ?? [];
   isStandBy.value = reservation.isStandBy;
-  stationNumber.value = reservation.stationNumber;
+  stationNumber.value = reservation.stationNumber; 
+  chatData.value.iata = reservation.stationNumber;
   clid.value = reservation.clid;
+  amPNR.value = ticketForm.value.pnr
 
   segments.value = legs.value.flatMap((leg, i) =>
     (leg.segments ?? []).map((seg) => ({
@@ -282,7 +317,7 @@ function capitalize(word = "") {
 }
 
 const handleSeat = (seat, currentIndexInLegsToMap) => {
-  
+
   const segView = legsToMap.value[currentIndexInLegsToMap];
   if (!segView) return;
 
@@ -483,18 +518,14 @@ watch(legsToMap, (list) => {
           @toggle-all="handleToggleAll" @toggle="handleToggle" />
       </div>
     </ToolWrapper>
-    <footer
-      v-if="step == 'form' && segments.length"
-      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white"
-    >
-      <div
-        class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
-      >
+    <footer v-if="step == 'form' && segments.length"
+      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white">
+      <div class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center">
         <p class="text-xs sm:text-base">
           {{ trads.label_footer_text }}
         </p>
         <Button class="m-5" variant="secondary" size="lg" @click="goToSeats" :disabled="!canContinue">{{ continueLabel
-        }}</Button>
+          }}</Button>
       </div>
     </footer>
   </section>
@@ -505,10 +536,18 @@ watch(legsToMap, (list) => {
     leave-to-class="translate-y-full opacity-0">
     <SeatsMapLayout v-if="step === 'seatsMap'" :isStandBy="isStandBy" :formPayload="ticketForm"
       :seatMapPayload="seatMapPayload" @updateSeatMap="updateSeatMap" @close="handleCloseMap" @addSeat="handleSeat"
-      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :trads="trads"
-      :passenger="passenger" :seatsMapInfo="seatMapCache" :segments="legsToMap" :allSeatsAssigned="allSeatsAssigned"
-      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat"  />
+      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :trads="trads" :passenger="passenger"
+      :seatsMapInfo="seatMapCache" :segments="legsToMap" :allSeatsAssigned="allSeatsAssigned"
+      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat" />
   </Transition>
+
+  <DialogRoot :open="isIataValidationOpen">
+    <Chat v-if="isIataValidationOpen" @close="toggleIATAValidate" @active="activeChat" :chatData="chatData"
+      :isTool="true"></Chat>
+  </DialogRoot>
+  <ChatWidget v-if="isChatOpen" :viata="chatData.iata" :pnr="amPNR" :firstName="chatData.name"
+    :lastName="chatData.lastName" :email="chatData.email" :type="chatData.type" :lang="language" :open="true"
+    @close="() => isChatOpen = false" tool="Corporate Priority" :errorMessage="chatData.error" :typeOfChat="true" />
 </template>
 
 <style scoped>
