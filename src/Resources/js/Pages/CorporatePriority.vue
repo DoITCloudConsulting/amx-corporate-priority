@@ -38,6 +38,7 @@ const ticketForm = ref({
   lastname: "",
 });
 
+
 const formatPassengerName = (p = {}) =>
   p.firstName && p.lastName
     ? `${capitalize(p.firstName)} ${capitalize(p.lastName)}`
@@ -128,7 +129,6 @@ const trads = {
 
   label_seat_no_preferent: getTranslation('tools.corporate-priority.seat-no-preferent'),
 
-  //estaba mal escrito 'labl', ubicar label y corregir
   label_current_preferred: getTranslation('tools.corporate-priority.current-preferred'),
 
   label_seat_is_preferent: getTranslation('tools.corporate-priority.seat-is-preferent'),
@@ -144,8 +144,6 @@ const trads = {
 const alert = (message) => {
   window.alert(message);
 };
-
-console.log(window.location);
 
 const sendForm = async () => {
   isLoading.value = true;
@@ -190,40 +188,6 @@ const updateReservation = (reservation) => {
   );
 };
 
-const handleAssignSeats = async () => {
-  const toAssign = segments.value
-    .map((s, idx) => ({ seg: s, idx }))
-    .filter(({ seg }) => !!seg.newSeat);
-
-  if (!toAssign.length) {
-    console.log("No hay segmentos con newSeat para asignar.");
-    return;
-  }
-  notificationError.value = false;
-
-  const now = new Date();
-  const formatted =
-    now.getFullYear() +
-    "-" +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(now.getDate()).padStart(2, "0") +
-    "T" +
-    String(now.getHours()).padStart(2, "0") +
-    ":" +
-    String(now.getMinutes()).padStart(2, "0") +
-    ":" +
-    String(now.getSeconds()).padStart(2, "0");
-
-  let anySuccess = false;
-  console.log(toAssign);
-
-  const seatAssignPayload =
-    corporatePriorityService.prepareSeatAssignmentPayload();
-
-  const response = await corporatePriorityService.assignSeat(seatAssignPayload);
-};
-
 const selectedIds = ref(new Set());
 const segKey = (s) => s?.segmentID ?? s?.segmentCode;
 
@@ -244,7 +208,6 @@ const handleToggleAll = (val) => {
   selectedIds.value = val
     ? new Set(segments.value.map((s) => segKey(s)))
     : new Set();
-  console.log(legsToMap.value);
 };
 
 const seatMapCache = reactive({});
@@ -283,13 +246,9 @@ const ensureSeatMap = async (seg) => {
   seatMapStatus[key] = "loading";
   try {
     const payload = buildSeatMapPayload(seg);
-    console.log(payload);
 
     seatMapPayload = payload;
-
-    console.log(seatMapPayload);
     const { data } = await axios.post(route("get-seat-map"), seatMapPayload);
-    console.log(data);
 
     seatMapCache[key] = data;
     seatMapStatus[key] = "ready";
@@ -304,7 +263,6 @@ const updateSeatMap = (seg, newMap) => {
 
   seatMapCache[key] = newMap;
 
-  console.log(seatMapStatus);
 };
 
 const toUpper = (s) => (s ?? "").toString().toUpperCase();
@@ -324,6 +282,7 @@ function capitalize(word = "") {
 }
 
 const handleSeat = (seat, currentIndexInLegsToMap) => {
+  
   const segView = legsToMap.value[currentIndexInLegsToMap];
   if (!segView) return;
 
@@ -409,7 +368,6 @@ const deleteSelection = (payload) => {
     const { newSeat, ...rest } = segments.value[i];
     segments.value[i] = { ...rest };
   }
-  console.log(selectedIds.value.size);
 
   if (selectedIds.value.size == 0) {
     handleCloseMap();
@@ -547,9 +505,9 @@ watch(legsToMap, (list) => {
     leave-to-class="translate-y-full opacity-0">
     <SeatsMapLayout v-if="step === 'seatsMap'" :isStandBy="isStandBy" :formPayload="ticketForm"
       :seatMapPayload="seatMapPayload" @updateSeatMap="updateSeatMap" @close="handleCloseMap" @addSeat="handleSeat"
-      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :assignSeat="handleAssignSeats" :trads="trads"
+      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :trads="trads"
       :passenger="passenger" :seatsMapInfo="seatMapCache" :segments="legsToMap" :allSeatsAssigned="allSeatsAssigned"
-      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat" />
+      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat"  />
   </Transition>
 </template>
 

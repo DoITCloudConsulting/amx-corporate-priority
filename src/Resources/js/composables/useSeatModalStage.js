@@ -1,13 +1,9 @@
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 
 export const useSeatModalStage = ({ trads }) => {
   const stageName = ref("");
 
   const setStageName = (newStage) => (stageName.value = newStage);
-
-  onMounted(() => {
-    // setStageName("condonate");
-  });
 
   const createStage = ({ stageProps = {}, t }) => ({
     title: t.title ?? trads.label_seats,
@@ -63,7 +59,6 @@ export const useSeatModalStage = ({ trads }) => {
   const current = ref({});
 
   watch(stageName, (newValue) => {
-    console.log(newValue);
     if (stages[newValue] === undefined) {
       console.warn("⚙️ Usa un stageName correcto en useSeatModalStage");
       current.value = {};
@@ -71,8 +66,6 @@ export const useSeatModalStage = ({ trads }) => {
     }
 
     current.value = stages[newValue];
-
-    console.log(current.value);
   });
 
   return { stageName, setStageName, current };

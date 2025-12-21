@@ -9,7 +9,6 @@ import axios from 'axios';
 async function validateResponse({ message, segments, data }, ticketForm) {
   if (!data.customPassengerSegments.clid) {
     const response = await fetchCorporateValidation({ pnr: ticketForm.pnr });
-    console.log(response);
 
     if (!response?.isCorporate) {
       const errorNotification = getTranslation('common.tools.error.pnr.not-corporate');
@@ -43,7 +42,6 @@ async function validateResponse({ message, segments, data }, ticketForm) {
 export async function getTicketStatus(ticketData) {
   try {
     const data = await fetchTicketStatus(ticketData);
-    console.log(data);
 
     const { success, errorNotification } = await validateResponse(
       {

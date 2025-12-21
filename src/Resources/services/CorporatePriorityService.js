@@ -42,7 +42,6 @@ class CorporatePriorityService {
 
     for (let legIndex = 0; legIndex < reservation.segments.length; legIndex++) {
       const leg = reservation.segments[legIndex];
-      console.log(leg);
 
       if (leg.segments.length) {
         for (let segIndex = 0; segIndex < leg.segments.length; segIndex++) {
@@ -65,15 +64,12 @@ class CorporatePriorityService {
   }
 
   findSeat(segmentID, seatCode, map = null) {
-    console.log(map);
-    console.log(this.reservationSeatMap);
     return (map ?? this.reservationSeatMap)[segmentID].seatMap.find(
       (seat) => seat.seatCode === seatCode
     );
   }
 
   prepareSeatAssignmentPayload() {
-    console.log(this.currentSegment);
     const isNewAssignment =
       this.currentSegment?.newSeat && !this.currentSegment.seats.length
         ? true
@@ -183,10 +179,6 @@ class CorporatePriorityService {
  */
 
     const userName = usePage().props?.auth?.user?.name;
-
-    console.log(usePage().props);
-    console.log(usePage().props?.auth);
-    console.log(usePage().props?.auth?.user);
 
     const passenger = this.reservation.passenger;
 

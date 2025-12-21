@@ -34,6 +34,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isAssigned: {
+    type: Boolean,
+    default: false,
+  }
 });
 const emit = defineEmits(["save", "selectSegment", "close", "delete"]);
 const isOpen = ref(false);
@@ -65,6 +69,7 @@ const handleSelect = (index) => {
 const handleSave = () => {
   emit("save");
 };
+
 </script>
 <template>
   <div
@@ -220,7 +225,7 @@ const handleSave = () => {
         <Button
           @click="$emit('selectSegment', currentSegmentIndex + 1)"
           variant="primary"
-          :disabled="segments.length == 1 || !currentSegment.newSeat"
+          :disabled="segments.length == 1 || (!isAssigned || currentSegmentIndex+1 == segments.length)"
         >
           {{ trads.label_next }}
         </Button>
@@ -350,7 +355,7 @@ const handleSave = () => {
       <Button
         @click="$emit('selectSegment', currentSegmentIndex + 1)"
         class="max-w-40"
-        :disabled="segments.length == 1 || !currentSegment.newSeat"
+        :disabled="segments.length == 1 || !isAssigned"
       >
         {{ trads.label_next }}
       </Button>
