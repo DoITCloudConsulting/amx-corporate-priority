@@ -1,10 +1,9 @@
 <script setup>
 import { ref, reactive, computed, watch, watchEffect, onMounted } from "vue";
-import { CheckInput, Button, LinkButton } from "am-ui-package";
+import { CheckInput, Button, LinkButton, Overlay, LoaderSpinner } from "am-ui-package";
 import SeatsMap from "./SeatsMap.vue";
 import { useSeatModalStage } from "../composables/useSeatModalStage";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
-import CircleLoader from "./CircleLoader.vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
 import FooterSeatsBar from "./FooterSeatsBar.vue";
 import SeatModal from "./SeatModal.vue";
@@ -55,6 +54,7 @@ const initialHasAnySeatByIndex = reactive({});
 const canContinueWithNextSegment = ref(false);
 const agreeTermsBySegment = reactive({});
 const stageNameBySegment = reactive({});
+const saveLoader = ref(false);
 
 const initStageNames = (segments = []) => {
   segments.forEach((_, idx) => {
@@ -118,7 +118,6 @@ const agreeTermsForCurrentSegment = computed({
 const modalLabel = ref();
 
 const currentSegmentInfo = computed(() => {
-  console.log(props.segments);
   return props.segments[currentSegment.value] || {};
 });
 const currentSeatMapRaw = computed(() => {
@@ -147,7 +146,7 @@ watch(currentSegmentInfo, (newValue) => {
 
 const setStageNameBySeatTypeAndStatus = (segment) => {
   // If the segment has a seat already assigned
-  if (segment.seats.length) {
+  if (segment?.seats?.length) {
     const currentSeatAssigned = corporatePriorityService.findSeat(
       segment.segmentID,
       segment.seats[0].seatCode
@@ -181,7 +180,7 @@ const currentSeatMap = computed(() => {
     const map = (raw?.seatMap || raw).filter(
       (seat) => seat.type === "PREFERRED"
     );
-    console.log(map);
+    
     return map;
   }
 
@@ -279,7 +278,6 @@ const handleSelectSeat = (seat) => {
 };
 
 const handleDelete = (s) => {
-  console.log(s);
   emit("delete", s);
 };
 
@@ -319,12 +317,11 @@ watch(
 );
 
 const condonateSeats = async () => {
+  saveLoader.value = true;
   try {
     isProcessingCondonation.value = true;
 
     const response = await corporatePriorityService.condonate();
-
-    console.log(response);
 
     if (response.message === "Booking processed successfully") {
       const { pnr, passenger, numberTicket } =
@@ -336,13 +333,12 @@ const condonateSeats = async () => {
         numberTicket,
       });
 
-      console.log(reservation);
 
       const { seatMapsBySegmentId, segments } =
         await corporatePriorityService.getAllSeatMaps(reservation);
 
       segments.forEach((segment) => {
-        if (segment.seats.length) {
+        if (segment?.seats?.length) {
           const segmentId = segment.segmentID;
           // Seat from segment
           const seat = segment.seats[0];
@@ -372,6 +368,7 @@ const condonateSeats = async () => {
     console.log(error);
   } finally {
     isProcessingCondonation.value = false;
+    saveLoader.value = false;
   }
 };
 
@@ -382,12 +379,23 @@ const {
 } = useSeatModalStage({
   trads: props.trads,
 });
+
+// const setStageName = (value) => {
+//   stageNameForCurrentSegment.value = value;
+// };
+
+// const stageName = stageNameForCurrentSegment;
+
 </script>
 
 <template>
   <section
     class="w-screen bg-[#F2F8FC] items-center grid md:grid-cols-[400px_1fr] lg:grid-cols-2 grid-rows-[1fr_auto]"
   >
+
+      <Overlay :isOpen="saveLoader" class="absolute z-[200]">
+        <LoaderSpinner size="150" />
+      </Overlay>
     <div
       class="relative w-full h-full flex justify-center md:justify-end gap-5 px-5 row-start-1 row-end-3 col-start-1"
     >
@@ -448,7 +456,7 @@ const {
                   v-if="isAssigningSeat"
                   class="w-full h-full flex items-center justify-center"
                 >
-                  <CircleLoader size="xs" />
+                  <LoaderSpinner size="30" />
                 </div>
 
                 <span v-else>
@@ -489,7 +497,7 @@ const {
                   v-if="isAssigningSeat"
                   class="w-full h-full flex items-center justify-center"
                 >
-                  <CircleLoader size="xs" />
+                  <LoaderSpinner size="30" />
                 </div>
 
                 <span v-else>

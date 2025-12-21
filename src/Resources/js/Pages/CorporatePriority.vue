@@ -525,9 +525,13 @@ watch(legsToMap, (list) => {
           @toggle-all="handleToggleAll" @toggle="handleToggle" />
       </div>
     </ToolWrapper>
-    <footer v-if="step == 'form' && segments.length"
-      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 bg-white">
-      <div class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center">
+    <footer
+      v-if="step == 'form' && segments.length"
+      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white"
+    >
+      <div
+        class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
+      >
         <p class="text-xs sm:text-base">
           {{ trads.label_footer_text }}
         </p>
