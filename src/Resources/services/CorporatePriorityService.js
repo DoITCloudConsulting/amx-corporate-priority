@@ -5,6 +5,7 @@ class CorporatePriorityService {
   reservationSeatMap = {};
   reservation = {};
   currentSegment = {};
+  trackerActivity;
 
   async getIatas(IATA) {
     const { iata, salesforce_group_id } = usePage().props.auth.user;
@@ -61,9 +62,45 @@ class CorporatePriorityService {
     };
   }
   async getSeatMap(payload) {
-    const { data } = await axios.post(route("get-seat-map"), payload);
+    try {
+      const { data } = await axios.post(route("get-seat-map"), payload);
 
-    return data;
+      // fire tracker success
+      await this.trackerActivity.track({
+        name: "corporate-priority-seat-map",
+        params: {
+          pnr: this.reservation.pnr,
+          legCode: payload?.legCode,
+          segmentCode: payload?.segmentCode,
+          origin: payload?.origin,
+          destination: payload?.destination,
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.seat-map.success",
+        msg_type: "success",
+        lang: "en",
+      });
+
+      return data;
+    } catch (error) {
+      // track error
+      await this.trackerActivity.track({
+        name: "corporate-priority-seat-map",
+        params: {
+          pnr: this.reservation.pnr,
+          legCode: payload?.legCode,
+          segmentCode: payload?.segmentCode,
+          origin: payload?.origin,
+          destination: payload?.destination,
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.seat-map.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
+    }
   }
 
   async getAllSeatMaps(reservation) {
@@ -83,12 +120,38 @@ class CorporatePriorityService {
           });
 
           segments.push(segment);
-          seatMapsBySegmentId[segment.segmentID] = await this.getSeatMap(
-            payload
-          );
+          try {
+            seatMapsBySegmentId[segment.segmentID] = await this.getSeatMap(
+              payload
+            );
+          } catch (e) {
+            // track error for all-seat-maps
+            await this.trackerActivity.track({
+              name: "corporate-priority-all-seat-maps",
+              params: {
+                pnr: reservation.pnr,
+                segmentId: segment.segmentID,
+                result: "error",
+              },
+              template:
+                "templates.tools.corporate-priority.all-seat-maps.error",
+              msg_type: "error",
+              lang: "en",
+            });
+            throw e;
+          }
         }
       }
     }
+
+    // if everything ok, fire success tracker
+    await this.trackerActivity.track({
+      name: "corporate-priority-all-seat-maps",
+      params: { pnr: reservation.pnr, result: "success" },
+      template: "templates.tools.corporate-priority.all-seat-maps.success",
+      msg_type: "success",
+      lang: "en",
+    });
 
     return { seatMapsBySegmentId, segments };
   }
@@ -167,9 +230,43 @@ class CorporatePriorityService {
   }
 
   async assignSeat(payload) {
-    const response = await axios.post(route("assign-seat"), payload);
+    try {
+      const response = await axios.post(route("assign-seat"), payload);
 
-    return response;
+      await this.trackerActivity.track({
+        name: "corporate-priority-assign-seat",
+        params: {
+          pnr: payload?.reservationCode,
+          ticket: payload?.ticketNumber || this.reservation.numberTicket,
+          lastname:
+            payload?.passenger?.lastName || this.reservation.passenger.lastName,
+          seatCode: payload?.seat?.seatCode,
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.assign-seat.success",
+        msg_type: "success",
+        lang: "en",
+      });
+
+      return response;
+    } catch (error) {
+      await this.trackerActivity.track({
+        name: "corporate-priority-assign-seat",
+        params: {
+          pnr: payload?.reservationCode,
+          ticket: payload?.ticketNumber || this.reservation.numberTicket,
+          lastname:
+            payload?.passenger?.lastName || this.reservation.passenger.lastName,
+          seatCode: payload?.seat?.seatCode,
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.assign-seat.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
+    }
   }
 
   getCurrentSegmentSeat() {
@@ -177,11 +274,41 @@ class CorporatePriorityService {
   }
 
   async condonate() {
-    const { data } = await axios.post(route("condonate-seats"), {
-      pnr: this.reservation.pnr,
-    });
+    try {
+      const { data } = await axios.post(route("condonate-seats"), {
+        pnr: this.reservation.pnr,
+      });
 
-    return data;
+      await this.trackerActivity.track({
+        name: "corporate-priority-condonate",
+        params: {
+          pnr: this.reservation.pnr,
+          ticket: this.reservation.numberTicket,
+          lastname: this.reservation.passenger.lastName,
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.condonate.success",
+        msg_type: "success",
+        lang: "en",
+      });
+
+      return data;
+    } catch (error) {
+      await this.trackerActivity.track({
+        name: "corporate-priority-condonate",
+        params: {
+          pnr: this.reservation.pnr,
+          ticket: this.reservation.numberTicket,
+          lastname: this.reservation.passenger.lastName,
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.condonate.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
+    }
   }
 
   async preparePdfDownloadPayload(segments) {
@@ -234,19 +361,47 @@ class CorporatePriorityService {
   }
 
   async downloadPDF() {
-    const response = await axios.post(
-      route("pdf"),
-      { ...this.pdfDownloadPayload },
-      {
-        responseType: "blob",
-      }
-    );
-    const url = window.URL.createObjectURL(response.data);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = this.pdfDownloadPayload.fileName + ".pdf";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    try {
+      const response = await axios.post(
+        route("pdf"),
+        { ...this.pdfDownloadPayload },
+        {
+          responseType: "blob",
+        }
+      );
+      const url = window.URL.createObjectURL(response.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = this.pdfDownloadPayload.fileName + ".pdf";
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      await this.trackerActivity.track({
+        name: "corporate-priority-download-pdf",
+        params: {
+          pnr: this.pdfDownloadPayload.reservation,
+          fileName: this.pdfDownloadPayload.fileName,
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.download-pdf.success",
+        msg_type: "success",
+        lang: "en",
+      });
+    } catch (error) {
+      await this.trackerActivity.track({
+        name: "corporate-priority-download-pdf",
+        params: {
+          pnr: this.pdfDownloadPayload?.reservation,
+          fileName: this.pdfDownloadPayload?.fileName,
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.download-pdf.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
+    }
   }
 
   prepareCasePayload(data = {}) {

@@ -24,7 +24,7 @@ import Chat from "@/Components/Modals/Chat.vue";
 import ChatWidget from "@/Components/Modals/Chat/ChatWidget.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
 import LocalIcon from "../Components/Icons/Icon.vue";
-
+import { useEventTracker } from "@/composable/useEventTracker.ts";
 const step = ref("panel");
 const isLoading = ref(false);
 const isFormLoading = ref(false);
@@ -47,6 +47,7 @@ const ticketForm = ref({
   numberTicket: "",
   lastname: "",
 });
+
 const isIataValidationOpen = ref(false);
 const openOneTime = ref(false);
 const isChatOpen = ref(false);
@@ -65,6 +66,12 @@ const errorModal = ref({
   isOpen: false,
   stage: "",
 });
+
+const eventTracker = useEventTracker();
+
+console.log(eventTracker);
+
+corporatePriorityService.trackerActivity = eventTracker;
 
 const toggleIATAValidate = () => {
   isIataValidationOpen.value = !isIataValidationOpen.value;
@@ -359,8 +366,13 @@ const buildSeatMapPayload = (seg) => ({
 });
 
 let count = 0;
+
+const mapsLoading = ref(0);
+
 const ensureSeatMap = async (seg) => {
+  mapsLoading.value++;
   const key = segKey(seg);
+
   if (seatMapStatus[key] === "loading" || seatMapStatus[key] === "ready")
     return;
 
@@ -378,6 +390,8 @@ const ensureSeatMap = async (seg) => {
   } catch (e) {
     console.log(e.message);
     seatMapStatus[key] = "error";
+  } finally {
+    mapsLoading.value--;
   }
 };
 
@@ -747,7 +761,7 @@ const openErrorModal = (value, attrs = {}) => {
     </ToolWrapper>
     <footer
       v-if="step == 'form' && segments.length"
-      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white"
+      class="w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white"
     >
       <div
         class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
@@ -756,10 +770,14 @@ const openErrorModal = (value, attrs = {}) => {
           {{ trads.label_footer_text }}
         </p>
         <Button
-          class="m-5"
+          class="m-5 min-w-[83px]"
           variant="secondary"
           size="lg"
           @click="goToSeats"
+          :loader="{
+            isLoading: mapsLoading,
+            size: 'xs',
+          }"
           :disabled="!canContinue"
           >{{ continueLabel }}</Button
         >

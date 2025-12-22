@@ -193,7 +193,7 @@ const handleSave = () => {
         <p class="text-amDarkGray text-xs">
           {{ currentSegment.newSeat.seatCode }}
         </p>
-        <p class="text-xs lg:min-w-40">
+        <p class="text-xs min-w-10">
           {{ currentSegment.newSeat.seatCharacteristics[0] }}
         </p>
       </div>
@@ -215,7 +215,7 @@ const handleSave = () => {
         <LinkButton
           variant="primary"
           :class="[
-            `px-5 text-sm min-w-max`,
+            `px-5 text-sm min-w-max `,
             {
               'text-gray-600': !props.canSave,
               'text-amBlueInnovation': props.canSave,
@@ -224,7 +224,7 @@ const handleSave = () => {
           :disabled="!props.canSave"
           @click="handleSave"
         >
-          <span class="text-[11px] w-max">
+          <span class="text-[11px] w-max underline">
             {{ trads.label_save }}
           </span>
         </LinkButton>
@@ -232,6 +232,7 @@ const handleSave = () => {
           @click="$emit('selectSegment', currentSegmentIndex + 1)"
           variant="primary"
           width="full"
+          class="min-w-[83px]"
           :disabled="
             segments.length == 1 ||
             !isAssigned ||
