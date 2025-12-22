@@ -6,6 +6,36 @@ class CorporatePriorityService {
   reservation = {};
   currentSegment = {};
 
+  async getIatas(IATA) {
+    const { iata, salesforce_group_id } = usePage().props.auth.user;
+
+    let securityType = "";
+    let groupId = "";
+
+    if (salesforce_group_id == null || salesforce_group_id == "") {
+      securityType = "IATA";
+      groupId = iata;
+    } else {
+      securityType = "securityGroups";
+      groupId = salesforce_group_id;
+    }
+    let routeStr = "";
+
+    if (securityType == "securityGroups") {
+      routeStr = "/api/IATAS/" + groupId;
+    } else {
+      routeStr = "/api/groupiatas/" + groupId;
+    }
+
+    const response = await axios.get(routeStr);
+
+    return response.data;
+  }
+
+  isAnySeatAvailable(map) {
+    return map.some((seat) => seat.status === "AVAILABLE");
+  }
+
   prepareSeatMapPayload() {
     return {
       reservationCode: this.reservation.pnr,
@@ -150,7 +180,11 @@ class CorporatePriorityService {
 
     return data;
   }
-  async downloadPDF(segments) {
+
+  async preparePdfDownloadPayload(segments) {
+    const userName = usePage().props?.auth?.user?.name;
+    const passenger = this.reservation.passenger;
+
     const confirmedSegments = [];
     const pendingSegments = [];
 
@@ -169,31 +203,37 @@ class CorporatePriorityService {
       }
     });
 
-    /*      $reservation = $request->reservation;
-        $userName  = $request->userName;
-        $agency = $request->agency;
-        $corporate = $request->corporate;
-        $passengerName = $request->passengerName;
-        $confirmedSegments = $request->confirmedSegments;
-        $pendingSegments = $request->pendingSegments;
- */
+    console.log(this.reservation);
+    const issuerAccount = await this.getAccountByIata(
+      this.reservation.stationNumber
+    );
 
-    const userName = usePage().props?.auth?.user?.name;
+    this.pdfDownloadPayload = {
+      fileName: "Corporate_Priority",
+      reservation: this.reservation.pnr,
+      userName,
+      agency: issuerAccount.Name || "Agencia de prueba",
+      corporate: this.reservation.corporate || "Corporativo de prueba",
+      passengerName: `${passenger.lastName} / ${passenger.firstName}`,
+      confirmedSegments,
+      pendingSegments,
+    };
 
-    const passenger = this.reservation.passenger;
+    console.log(this.pdfDownloadPayload);
 
+    return { ...this.pdfDownloadPayload };
+  }
+
+  async getAccountByIata(iata) {
+    const response = await axios.get(route("account.getByIata", { iata }));
+
+    return response.data;
+  }
+
+  async downloadPDF() {
     const response = await axios.post(
       route("pdf"),
-      {
-        fileName: "Corporate_Priority",
-        reservation: this.reservation.pnr,
-        userName,
-        agency: "" || "Agencia de prueba",
-        corporate: "" || "Corporativo de prueba",
-        passengerName: `${passenger.lastName} / ${passenger.firstName}`,
-        confirmedSegments,
-        pendingSegments,
-      },
+      { ...this.pdfDownloadPayload },
       {
         responseType: "blob",
       }
@@ -201,9 +241,61 @@ class CorporatePriorityService {
     const url = window.URL.createObjectURL(response.data);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "Corporate_Priority.pdf"; // fuerza la descarga
+    a.download = this.pdfDownloadPayload.fileName + ".pdf";
     a.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  prepareCasePayload(data = {}) {
+    const { lastName, firstName, nameId } = this.reservation.passenger;
+
+    console.log(this.currentSegment);
+    console.log(this.reservation);
+    console.log(usePage().props.auth.user);
+    const user = usePage().props?.auth?.user;
+    const segment = this.currentSegment;
+
+    const caseData = {
+      concept: "CORPORATE PRIORITY",
+      subconcept: "ASIENTOS PREFERENTES",
+      typeGSS: "Waivers Standard",
+      description: "description",
+      priority: "Medium",
+      status: "Confirmado",
+      firstNameRequest: user.first_name,
+      lastNameRequest: user.last_name,
+      iata: this.reservation.stationNumber,
+      recordId: "",
+      iataSolicitante: user.iata,
+      waiver: null,
+      ...data?.case,
+    };
+
+    return {
+      booking: {
+        flight: this.currentSegment.flightNumber,
+        route: `${segment.startLocation} - ${segment.endLocation}`,
+        bookinIata: this.reservation.stationNumber,
+        flightDate: segment.departureDateTime,
+        name: this.reservation.pnr,
+        recordId: "",
+      },
+      passenger: {
+        firstName: firstName,
+        lastName: lastName,
+        NumberPassengers: nameId,
+        name: `${firstName} ${lastName}`,
+        totalPassengers: 1,
+        recordId: "",
+      },
+      case: caseData,
+    };
+  }
+
+  async createCase(payload) {
+    const response = await axios.post(route("createCase"), payload);
+
+    return response.data.data.records[0];
   }
 }
 

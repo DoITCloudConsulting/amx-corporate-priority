@@ -9,17 +9,20 @@ import {
   Button,
   SeatsTicket,
   GeneralToast,
+  BaseModal,
 } from "am-ui-package";
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { getTicketStatus } from "../composables/useTicketStatus";
 import { usePage } from "@inertiajs/vue3";
 import Cookies from "js-cookie";
 import axios from "axios";
-import { getTranslation } from '@shared/getTranslation'
+import { getTranslation } from "@shared/getTranslation";
 import { DialogRoot } from "radix-vue";
 import SeatsMapLayout from "../Components/SeatsMapLayout.vue";
 import Chat from "@/Components/Modals/Chat.vue";
 import ChatWidget from "@/Components/Modals/Chat/ChatWidget.vue";
+import { corporatePriorityService } from "../../services/CorporatePriorityService";
+import LocalIcon from "../Components/Icons/Icon.vue";
 
 const step = ref("panel");
 const isLoading = ref(false);
@@ -31,7 +34,11 @@ const segments = ref([]);
 const stationNumber = ref("");
 const clid = ref("");
 const notificationError = ref(false);
-const isToastOpen = ref(true);
+const toast = ref({
+  isOpen: false,
+  variant: "success",
+  stage: "",
+});
 const allSeatsAssigned = ref(false);
 const isStandBy = ref();
 const ticketForm = ref({
@@ -39,24 +46,23 @@ const ticketForm = ref({
   numberTicket: "",
   lastname: "",
 });
-const isIataValidationOpen = ref(true)
-const openOneTime= ref(false);
+const isIataValidationOpen = ref(true);
+const openOneTime = ref(false);
 const isChatOpen = ref(false);
 const user = usePage().props?.auth?.user;
-const language = Cookies.get("USRLOC").split("-")[1]
+const language = Cookies.get("USRLOC").split("-")[1];
 const chatData = ref({
-                iata: "",
-                name: user ? user.first_name : "",
-                lastName: user ? user.last_name : "",
-                email: user ? user.email : "",
-                type: "Waivers",
-                error: "",
-            })
-const amPNR = ref()
-
+  iata: "",
+  name: user ? user.first_name : "",
+  lastName: user ? user.last_name : "",
+  email: user ? user.email : "",
+  type: "Waivers",
+  error: "",
+});
+const amPNR = ref();
 
 const toggleIATAValidate = () => {
-  isIataValidationOpen.value = !isIataValidationOpen.value
+  isIataValidationOpen.value = !isIataValidationOpen.value;
 };
 
 const activeChat = () => {
@@ -65,12 +71,12 @@ const activeChat = () => {
   }
   isChatOpen.value = true;
   openOneTime.value = true;
-}
+};
 
 const openTwice = () => {
   const element = document.getElementById("widget-container");
   element.classList.add("visible");
-}
+};
 
 const formatPassengerName = (p = {}) =>
   p.firstName && p.lastName
@@ -78,100 +84,131 @@ const formatPassengerName = (p = {}) =>
     : "";
 
 const trads = {
-  label_tool_name: getTranslation('tools.corporate-priority.title'),
-  label_tool_description: getTranslation('tools.corporate-priority.description'),
-  label_need_help: getTranslation('navbar.common.need-help'),
-  label_back: getTranslation('common.tools.back'),
+  label_tool_name: getTranslation("tools.corporate-priority.title"),
+  label_tool_description: getTranslation(
+    "tools.corporate-priority.description"
+  ),
+  label_need_help: getTranslation("navbar.common.need-help"),
+  label_back: getTranslation("common.tools.back"),
 
-  label_name: getTranslation('common.tools.ticket.name'),
-  label_status: getTranslation('common.tools.ticket.status'),
-  label_origin: getTranslation('common.tools.ticket.origin'),
-  label_destiny: getTranslation('common.tools.ticket.destination'),
-  label_date: getTranslation('common.tools.ticket.date'),
-  label_time: getTranslation('common.tools.ticket.time'),
-  label_seat: getTranslation('common.tools.ticket.seat'),
-  label_class: getTranslation('common.tools.ticket.class'),
-  label_type: getTranslation('common.tools.ticket.type'),
+  label_name: getTranslation("common.tools.ticket.name"),
+  label_status: getTranslation("common.tools.ticket.status"),
+  label_origin: getTranslation("common.tools.ticket.origin"),
+  label_destiny: getTranslation("common.tools.ticket.destination"),
+  label_date: getTranslation("common.tools.ticket.date"),
+  label_time: getTranslation("common.tools.ticket.time"),
+  label_seat: getTranslation("common.tools.ticket.seat"),
+  label_class: getTranslation("common.tools.ticket.class"),
+  label_type: getTranslation("common.tools.ticket.type"),
 
-  label_pnr: getTranslation('common.tools.form.AMPNR'),
-  label_ticket: getTranslation('common.tools.form.ticket'),
-  label_lastname: getTranslation('common.tools.form.lastname'),
-  label_corporate: getTranslation('common.tools.ticket.status-seat'),
+  label_pnr: getTranslation("common.tools.form.AMPNR"),
+  label_ticket: getTranslation("common.tools.form.ticket"),
+  label_lastname: getTranslation("common.tools.form.lastname"),
+  label_corporate: getTranslation("common.tools.ticket.status-seat"),
 
-  label_continue: getTranslation('common.tools.continue'),
-  label_confirmated: getTranslation('common.confirmed'),
-  label_pending: getTranslation('common.pending'),
-  label_confirm: getTranslation('common.confirm'),
+  label_continue: getTranslation("common.tools.continue"),
+  label_confirmated: getTranslation("common.confirmed"),
+  label_pending: getTranslation("common.pending"),
+  label_confirm: getTranslation("common.confirm"),
 
-  label_consult: getTranslation('common.tools.form.button-consult'),
-  label_consulting: getTranslation('common.tools.form.button-consulting'),
+  label_consult: getTranslation("common.tools.form.button-consult"),
+  label_consulting: getTranslation("common.tools.form.button-consulting"),
 
-  label_panel_title: getTranslation('common.tools.general-information'),
-  label_error: getTranslation('common.tools.error'),
-  label_no_benefit: getTranslation('common.tools.error.not-corporate'),
+  label_panel_title: getTranslation("common.tools.general-information"),
+  label_error: getTranslation("common.tools.error"),
+  label_no_benefit: getTranslation("common.tools.error.not-corporate"),
 
-  label_no_seats_available: getTranslation('tools.corporate-priority.no-seats-available'),
+  label_no_seats_available: getTranslation(
+    "tools.corporate-priority.no-seats-available"
+  ),
 
-  label_1_panel: getTranslation('tools.corporate-priority.panel-text-1'),
-  label_2_panel: getTranslation('tools.corporate-priority.panel-text-2'),
-  label_3_panel: getTranslation('tools.corporate-priority.panel-text-3'),
-  label_4_panel: getTranslation('tools.corporate-priority.panel-text-4'),
+  label_1_panel: getTranslation("tools.corporate-priority.panel-text-1"),
+  label_2_panel: getTranslation("tools.corporate-priority.panel-text-2"),
+  label_3_panel: getTranslation("tools.corporate-priority.panel-text-3"),
+  label_4_panel: getTranslation("tools.corporate-priority.panel-text-4"),
 
-  label_found_first: getTranslation('tools.corporate-priority.found-first'),
-  label_found_last: getTranslation('tools.corporate-priority.found-last'),
+  label_found_first: getTranslation("tools.corporate-priority.found-first"),
+  label_found_last: getTranslation("tools.corporate-priority.found-last"),
 
-  label_empty_top: getTranslation('common.tools.here-related'),
-  label_no_reservations: getTranslation('common.tools.no-reservations-registered'),
-  label_check_all: getTranslation('common.tools.select-all'),
-  label_tickets: getTranslation('common.tools.tickets'),
+  label_empty_top: getTranslation("common.tools.here-related"),
+  label_no_reservations: getTranslation(
+    "common.tools.no-reservations-registered"
+  ),
+  label_check_all: getTranslation("common.tools.select-all"),
+  label_tickets: getTranslation("common.tools.tickets"),
 
-  label_footer_text: getTranslation('tools.corporate-priority.footer-text'),
+  label_footer_text: getTranslation("tools.corporate-priority.footer-text"),
 
-  label_am_flight: getTranslation('tools.corporate-priority.am-flight'),
-  label_am_preferred: getTranslation('tools.corporate-priority.am-prefered'),
-  label_of: getTranslation('common.tools.of'),
+  label_am_flight: getTranslation("tools.corporate-priority.am-flight"),
+  label_am_preferred: getTranslation("tools.corporate-priority.am-prefered"),
+  label_of: getTranslation("common.tools.of"),
 
-  label_standard_seat: getTranslation('tools.corporate-priority.standard-seat'),
-  label_priority_landing: getTranslation('tools.corporate-priority.priority-landing'),
-  label_priority_ubication: getTranslation('tools.corporate-priority.priority-ubication'),
+  label_standard_seat: getTranslation("tools.corporate-priority.standard-seat"),
+  label_priority_landing: getTranslation(
+    "tools.corporate-priority.priority-landing"
+  ),
+  label_priority_ubication: getTranslation(
+    "tools.corporate-priority.priority-ubication"
+  ),
 
-  label_passenger: getTranslation('common.tools.passenger'),
-  label_seats: getTranslation('common.tools.seats'),
+  label_passenger: getTranslation("common.tools.passenger"),
+  label_seats: getTranslation("common.tools.seats"),
 
-  label_next: getTranslation('common.next'),
+  label_next: getTranslation("common.next"),
 
   // Esta label esta repetida revisar
-  label_select_seat: getTranslation('tools.corporate-priority.select-segment'),
+  label_select_seat: getTranslation("tools.corporate-priority.select-segment"),
 
-  label_segment: getTranslation('common.tools.segment'),
-  label_save: getTranslation('tools.corporate-priority.save-leave'),
+  label_segment: getTranslation("common.tools.segment"),
+  label_save: getTranslation("tools.corporate-priority.save-leave"),
 
-  label_no_seat: getTranslation('tools.corporate-priority.no-seat'),
-  label_select_segment: getTranslation('tools.corporate-priority.select-segment'),
+  label_no_seat: getTranslation("tools.corporate-priority.no-seat"),
+  label_select_segment: getTranslation(
+    "tools.corporate-priority.select-segment"
+  ),
 
-  label_success_toast: getTranslation('tools.corporate-priority.success-corporate'),
+  label_success_toast: getTranslation(
+    "tools.corporate-priority.success-corporate"
+  ),
 
-  label_invalid_pnr: getTranslation('common.tools.form-errors.invalid-pnr'),
-  label_invalid_ticket_number: getTranslation('common.tools.form-errors.invalid-ticket-number'),
-  label_invalid_value: getTranslation('common.tools.form-errors.invalid-value'),
+  label_invalid_pnr: getTranslation("common.tools.form-errors.invalid-pnr"),
+  label_invalid_ticket_number: getTranslation(
+    "common.tools.form-errors.invalid-ticket-number"
+  ),
+  label_invalid_value: getTranslation("common.tools.form-errors.invalid-value"),
 
-  label_condonate: getTranslation('tools.corporate-priority.condonate'),
-  label_seat_condonate: getTranslation('tools.corporate-priority.seat-condonate'),
-  label_seat_yes_condonate: getTranslation('tools.corporate-priority.seat-yes-condonate'),
-  label_seat_no_condonate: getTranslation('tools.corporate-priority.seat-no-condonate'),
+  label_condonate: getTranslation("tools.corporate-priority.condonate"),
+  label_seat_condonate: getTranslation(
+    "tools.corporate-priority.seat-condonate"
+  ),
+  label_seat_yes_condonate: getTranslation(
+    "tools.corporate-priority.seat-yes-condonate"
+  ),
+  label_seat_no_condonate: getTranslation(
+    "tools.corporate-priority.seat-no-condonate"
+  ),
 
-  label_seat_no_preferent: getTranslation('tools.corporate-priority.seat-no-preferent'),
+  label_seat_no_preferent: getTranslation(
+    "tools.corporate-priority.seat-no-preferent"
+  ),
 
-  label_current_preferred: getTranslation('tools.corporate-priority.current-preferred'),
+  //estaba mal escrito 'labl', ubicar label y corregir
+  label_current_preferred: getTranslation(
+    "tools.corporate-priority.current-preferred"
+  ),
 
-  label_seat_is_preferent: getTranslation('tools.corporate-priority.seat-is-preferent'),
+  label_seat_is_preferent: getTranslation(
+    "tools.corporate-priority.seat-is-preferent"
+  ),
 
-  label_price: getTranslation('tools.corporate-priority.price'),
-  label_window: getTranslation('tools.corporate-priority.window'),
-  label_aisle: getTranslation('tools.corporate-priority.aisle'),
-  label_middle: getTranslation('tools.corporate-priority.middle'),
-  label_agree_terms: getTranslation('tools.corporate-priority.agree-terms'),
-  label_change_success: getTranslation('tools.corporate-priority.change-success'),
+  label_price: getTranslation("tools.corporate-priority.price"),
+  label_window: getTranslation("tools.corporate-priority.window"),
+  label_aisle: getTranslation("tools.corporate-priority.aisle"),
+  label_middle: getTranslation("tools.corporate-priority.middle"),
+  label_agree_terms: getTranslation("tools.corporate-priority.agree-terms"),
+  label_change_success: getTranslation(
+    "tools.corporate-priority.change-success"
+  ),
 };
 
 const alert = (message) => {
@@ -191,6 +228,30 @@ const sendForm = async () => {
       return;
     }
 
+    console.log(res);
+
+    const iatas = await corporatePriorityService.getIatas();
+
+    if (!iatas.includes(res.stationNumber)) {
+      return console.log("Invalid profile");
+    } else {
+      console.log("Valid profile");
+    }
+
+    corporatePriorityService.reservation = {
+      ...corporatePriorityService.reservation,
+      corporate: res.benefits.customizedValueOneC,
+      stationNumber: res.stationNumber,
+      pnr: res.pnr,
+      passenger: {
+        ...corporatePriorityService?.reservation?.passenger,
+        lastName: res.passenger.lastName,
+      },
+      numberTicket: res.segments[0].segments[0].number,
+    };
+
+    console.log(corporatePriorityService.reservation);
+
     updateReservation(res);
   } catch (err) {
     notificationError.value =
@@ -208,10 +269,10 @@ const updateReservation = (reservation) => {
   };
   legs.value = reservation.segments ?? [];
   isStandBy.value = reservation.isStandBy;
-  stationNumber.value = reservation.stationNumber; 
+  stationNumber.value = reservation.stationNumber;
   chatData.value.iata = reservation.stationNumber;
   clid.value = reservation.clid;
-  amPNR.value = ticketForm.value.pnr
+  amPNR.value = ticketForm.value.pnr;
 
   segments.value = legs.value.flatMap((leg, i) =>
     (leg.segments ?? []).map((seg) => ({
@@ -297,7 +358,6 @@ const updateSeatMap = (seg, newMap) => {
   const key = segKey(seg);
 
   seatMapCache[key] = newMap;
-
 };
 
 const toUpper = (s) => (s ?? "").toString().toUpperCase();
@@ -317,7 +377,6 @@ function capitalize(word = "") {
 }
 
 const handleSeat = (seat, currentIndexInLegsToMap) => {
-
   const segView = legsToMap.value[currentIndexInLegsToMap];
   if (!segView) return;
 
@@ -351,7 +410,7 @@ const handleCloseMap = (showToast, segment) => {
   }
 };
 
-onMounted(() => { });
+onMounted(() => {});
 
 const readyCount = computed(
   () =>
@@ -424,33 +483,91 @@ function onUpdateAgreeTerms({ index, value }) {
 watch(legsToMap, (list) => {
   list.forEach(ensureSeatMap);
 });
+
+const openToast = (value, attrs = {}) => {
+  toast.value = {
+    ...toast,
+    ...attrs,
+    isOpen: value,
+  };
+
+  console.log(toast.value);
+};
+
+const dowloadPdf = async () => {
+  await corporatePriorityService.downloadPDF();
+  openToast(false);
+};
 </script>
 
 <template>
-  <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
-    <GeneralToast :is-open="isToastOpen" @close="isToastOpen = false">
-      <p class="text-white">
-        El beneficio de Corporate Priority se otorgó de forma exitosa.
-        <button type="button" class="text-white underline">
-          Descargar el PDF
-        </button>
+  <GeneralToast
+    :is-open="toast.isOpen && toast.variant === 'success'"
+    @close="openToast(false)"
+    variant="success"
+  >
+    <p v-if="toast.variant === 'success'" class="text-white">
+      El beneficio de Corporate Priority se otorgó de forma exitosa.
+      <button @click="dowloadPdf" type="button" class="text-white underline">
+        Descargar el PDF
+      </button>
+    </p>
+  </GeneralToast>
+  <GeneralToast
+    :is-open="toast.isOpen && toast.variant === 'error'"
+    @close="openToast(false)"
+    variant="error"
+  >
+    <p v-if="toast.stage === 'NO_SEATS_AVAILABLES'" class="">
+      El segmento seleccionado no cuenta con asientos preferentes disponibles
+      para otorgar el beneficio.
+    </p>
+    <p v-if="toast.stage === 'BOOKING_CONDONATION_UNSUCCESFULLY'" class="">
+      {{ toast.text }}
+    </p>
+  </GeneralToast>
+  <BaseModal :is-open="true" class="z-[1000]">
+    <div class="flex flex-col gap-[15px] items-center "">
+      <LocalIcon name="ErrorSeat" />
+      <h2 class="text-[18px] text-center">Error</h2>
+      <p class="text-sm leading-5 text-center">
+        Tu reservación tiene segmentos sin asientos, es necesario contactar a
+        GSS para su atención inmediata deseas abrir un caso en el chat
       </p>
-    </GeneralToast>
-    <ToolWrapper class="mb-40" :tool="trads.label_tool_name" :description="trads.label_tool_description" @goBack="
-      () => {
-        step = 'panel';
-      }
-    " @handleNeedHelp="
-      () => {
-        alert('Help is on the way!');
-      }
-    ">
-      <ToolPanel v-if="step === 'panel'" class="mt-[42px] lg:mt-[56px]" :textButton="trads.label_continue"
-        :title="trads.label_panel_title" icon="InputTextIcon" @onClick="
+      <p class="text-center text-sm">
+        Contactar con <a href="" class="underline">Global Sales Support</a>
+      </p>
+    </div>
+    <Button size="xl" width="full">Confirmar</Button>
+  </BaseModal>
+  <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
+    <ToolWrapper
+      class="mb-40"
+      :tool="trads.label_tool_name"
+      :description="trads.label_tool_description"
+      @goBack="
+        () => {
+          step = 'panel';
+        }
+      "
+      @handleNeedHelp="
+        () => {
+          alert('Help is on the way!');
+        }
+      "
+    >
+      <ToolPanel
+        v-if="step === 'panel'"
+        class="mt-[42px] lg:mt-[56px]"
+        :textButton="trads.label_continue"
+        :title="trads.label_panel_title"
+        icon="InputTextIcon"
+        @onClick="
           () => {
             step = 'form';
           }
-        ">
+        "
+      >
         <div class="hidden sm:grid grid-cols-2 gap-5 text-[10px] md:text-xs">
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
@@ -475,7 +592,9 @@ watch(legsToMap, (list) => {
             </p>
           </div>
         </div>
-        <div class="grid sm:hidden grid-cols-1 gap-5 text-[10px] md:text-xs my-8">
+        <div
+          class="grid sm:hidden grid-cols-1 gap-5 text-[10px] md:text-xs my-8"
+        >
           <div class="flex flex-row items-center gap-2">
             <Icon name="SeatSelection" />
             <p>
@@ -500,54 +619,127 @@ watch(legsToMap, (list) => {
           </div>
         </div>
       </ToolPanel>
-      <div id="ticket-form" v-else-if="step === 'form'" class="flex flex-col gap-5 mt-10">
-        <PNRForm :ticketForm="ticketForm" :trads="trads" @update:ticketForm="
-          (val) => {
-            ticketForm.value = onUpdateTicketForm(val);
-          }
-        " @handleSend="sendForm" :isLoading="isFormLoading" />
+      <div
+        id="ticket-form"
+        v-else-if="step === 'form'"
+        class="flex flex-col gap-5 mt-10"
+      >
+        <PNRForm
+          :ticketForm="ticketForm"
+          :trads="trads"
+          @update:ticketForm="
+            (val) => {
+              ticketForm.value = onUpdateTicketForm(val);
+            }
+          "
+          @handleSend="sendForm"
+          :isLoading="isFormLoading"
+        />
 
-        <NotificationBar v-if="notificationError" variant="error" @close="() => (notificationError = false)">
+        <NotificationBar
+          v-if="notificationError"
+          variant="error"
+          @close="() => (notificationError = false)"
+        >
           {{ notificationError }}
         </NotificationBar>
 
-        <EmptyStateIllustration v-if="!segments.length" data-cy="empty-ticket-card"
-          :description="trads.label_no_reservations" :topText="trads.label_empty_top" :isLoading="isLoading" />
-        <SeatsTicket v-if="segments.length" :passenger="passenger" :segments="segments" :selected-ids="selectedIdsArr"
-          :checkLabel="trads.label_check_all" :selectAll="true" :trads="trads" :clid="clid"
-          @toggle-all="handleToggleAll" @toggle="handleToggle" />
+        <EmptyStateIllustration
+          v-if="!segments.length"
+          data-cy="empty-ticket-card"
+          :description="trads.label_no_reservations"
+          :topText="trads.label_empty_top"
+          :isLoading="isLoading"
+        />
+        <SeatsTicket
+          v-if="segments.length"
+          :passenger="passenger"
+          :segments="segments"
+          :selected-ids="selectedIdsArr"
+          :checkLabel="trads.label_check_all"
+          :selectAll="true"
+          :trads="trads"
+          :clid="clid"
+          @toggle-all="handleToggleAll"
+          @toggle="handleToggle"
+        />
       </div>
     </ToolWrapper>
-    <footer v-if="step == 'form' && segments.length"
-      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white">
-      <div class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center">
+    <footer
+      v-if="step == 'form' && segments.length"
+      class="fixed bottom-0 w-full flex justify-center px-16 py-[10px] border-t-2 z-[100] bg-white"
+    >
+      <div
+        class="w-full max-w-[736px] flex flex-col sm:flex-row justify-between items-center"
+      >
         <p class="text-xs sm:text-base">
           {{ trads.label_footer_text }}
         </p>
-        <Button class="m-5" variant="secondary" size="lg" @click="goToSeats" :disabled="!canContinue">{{ continueLabel
-          }}</Button>
+        <Button
+          class="m-5"
+          variant="secondary"
+          size="lg"
+          @click="goToSeats"
+          :disabled="!canContinue"
+          >{{ continueLabel }}</Button
+        >
       </div>
     </footer>
   </section>
 
-  <Transition enter-active-class="transform transition ease-out duration-500"
-    enter-from-class="translate-y-full opacity-0" enter-to-class="translate-y-0 opacity-100"
-    leave-active-class="transform transition ease-in duration-500" leave-from-class="translate-y-0 opacity-100"
-    leave-to-class="translate-y-full opacity-0">
-    <SeatsMapLayout v-if="step === 'seatsMap'" :isStandBy="isStandBy" :formPayload="ticketForm"
-      :seatMapPayload="seatMapPayload" @updateSeatMap="updateSeatMap" @close="handleCloseMap" @addSeat="handleSeat"
-      @delete="deleteSelection" @update-agree-terms="onUpdateAgreeTerms" :trads="trads" :passenger="passenger"
-      :seatsMapInfo="seatMapCache" :segments="legsToMap" :allSeatsAssigned="allSeatsAssigned"
-      @updateReservation="updateReservation" :isChangedSeat="isChangedSeat" />
+  <Transition
+    enter-active-class="transform transition ease-out duration-500"
+    enter-from-class="translate-y-full opacity-0"
+    enter-to-class="translate-y-0 opacity-100"
+    leave-active-class="transform transition ease-in duration-500"
+    leave-from-class="translate-y-0 opacity-100"
+    leave-to-class="translate-y-full opacity-0"
+  >
+    <SeatsMapLayout
+      v-if="step === 'seatsMap'"
+      :isStandBy="isStandBy"
+      :formPayload="ticketForm"
+      :seatMapPayload="seatMapPayload"
+      @updateSeatMap="updateSeatMap"
+      @close="handleCloseMap"
+      @addSeat="handleSeat"
+      @delete="deleteSelection"
+      @update-agree-terms="onUpdateAgreeTerms"
+      :trads="trads"
+      :passenger="passenger"
+      :seatsMapInfo="seatMapCache"
+      :segments="legsToMap"
+      :allSeatsAssigned="allSeatsAssigned"
+      @updateReservation="updateReservation"
+      :isChangedSeat="isChangedSeat"
+      @open-toast="openToast"
+    />
   </Transition>
 
   <DialogRoot :open="isIataValidationOpen">
-    <Chat v-if="isIataValidationOpen" @close="toggleIATAValidate" @active="activeChat" :chatData="chatData"
-      :isTool="true"></Chat>
+    <Chat
+      v-if="isIataValidationOpen"
+      @close="toggleIATAValidate"
+      @active="activeChat"
+      :chatData="chatData"
+      :isTool="true"
+    ></Chat>
   </DialogRoot>
-  <ChatWidget v-if="isChatOpen" :viata="chatData.iata" :pnr="amPNR" :firstName="chatData.name"
-    :lastName="chatData.lastName" :email="chatData.email" :type="chatData.type" :lang="language" :open="true"
-    @close="() => isChatOpen = false" tool="Corporate Priority" :errorMessage="chatData.error" :typeOfChat="true" />
+  <ChatWidget
+    v-if="isChatOpen"
+    :viata="chatData.iata"
+    :pnr="amPNR"
+    :firstName="chatData.name"
+    :lastName="chatData.lastName"
+    :email="chatData.email"
+    :type="chatData.type"
+    :lang="language"
+    :open="false"
+    @close="() => (isChatOpen = false)"
+    tool="Corporate Priority"
+    :errorMessage="chatData.error"
+    :typeOfChat="true"
+  />
 </template>
 
 <style scoped>

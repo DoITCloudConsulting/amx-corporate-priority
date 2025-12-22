@@ -37,7 +37,7 @@ const props = defineProps({
   isAssigned: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 const emit = defineEmits(["save", "selectSegment", "close", "delete"]);
 const isOpen = ref(false);
@@ -69,12 +69,11 @@ const handleSelect = (index) => {
 const handleSave = () => {
   emit("save");
 };
-
 </script>
 <template>
   <div
     id="desktop"
-    class="hidden sm:flex fixed bottom-0 justify-center min-h-20 flex-col z-[100] col-start-1 row-start-2"
+    class="hidden sm:flex bottom-0 justify-center min-h-20 flex-col z-[100] col-start-1 row-start-2"
   >
     <Transition name="collapse-desktop">
       <div
@@ -225,7 +224,11 @@ const handleSave = () => {
         <Button
           @click="$emit('selectSegment', currentSegmentIndex + 1)"
           variant="primary"
-          :disabled="segments.length == 1 || (!isAssigned || currentSegmentIndex+1 == segments.length)"
+          :disabled="
+            segments.length == 1 ||
+            !isAssigned ||
+            currentSegmentIndex + 1 == segments.length
+          "
         >
           {{ trads.label_next }}
         </Button>

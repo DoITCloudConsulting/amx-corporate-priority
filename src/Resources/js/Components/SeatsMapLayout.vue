@@ -1,6 +1,12 @@
 <script setup>
 import { ref, reactive, computed, watch, watchEffect, onMounted } from "vue";
-import { CheckInput, Button, LinkButton, Overlay, LoaderSpinner } from "am-ui-package";
+import {
+  CheckInput,
+  Button,
+  LinkButton,
+  Overlay,
+  LoaderSpinner,
+} from "am-ui-package";
 
 import SeatsMap from "./SeatsMap.vue";
 import FooterSeatsBar from "./FooterSeatsBar.vue";
@@ -14,7 +20,7 @@ import { getTicketStatus } from "../composables/useTicketStatus";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
 
 const props = defineProps({
-  seatsMapInfo: { type: Array, default: () => [] },
+  seatsMapInfo: { type: Object, default: {} },
   segments: { type: Array, default: () => [] },
   passenger: { type: Object, default: () => ({}) },
   trads: { type: Object, default: () => ({}) },
@@ -23,7 +29,6 @@ const props = defineProps({
   isStandBy: { type: Boolean, required: true },
   formPayload: { type: Object, default: {}, required: true },
   isChangedSeat: { type: Boolean },
-  assignedSegments: {type: Object, required: true},
 });
 
 const emit = defineEmits([
@@ -33,18 +38,18 @@ const emit = defineEmits([
   "update-agree-terms",
   "updateSeatMap",
   "updateReservation",
+  "openToast",
 ]);
 
 const aircraftType = {
   "79M": ["A", "B", "C", "|", "D", "E", "F"],
   "7M9": ["A", "B", "C", "|", "D", "E", "F"],
   "7M8": ["A", "B", "C", "|", "D", "E", "F"],
-  "E90": ["A", "B", "|", "C", "D"],
+  E90: ["A", "B", "|", "C", "D"],
   "E-190": ["A", "B", "|", "C", "D"],
   "7S8": ["A", "B", "|", "C", "D"],
-  "789": ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
+  789: ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
 };
-
 
 /* ======================================================
  * 4️⃣ Estado local
@@ -69,6 +74,9 @@ const seatsCharacteristics = ref([
 
 const assignedSegments = ref(new Set());
 
+const currentSegmentInfo = computed(
+  () => props.segments[currentSegment.value] || {}
+);
 
 /* ======================================================
  * 5️⃣ Composables
@@ -86,15 +94,14 @@ const {
   current: currentModalStage,
   setStageName,
   stageName,
-} = useSeatModalStage({ trads: props.trads });
-
+} = useSeatModalStage({
+  trads: props.trads,
+  close: () => emit("close", false, currentSegmentInfo.value),
+});
 
 /* ======================================================
  * 6️⃣ Computed
  * ==================================================== */
-const currentSegmentInfo = computed(
-  () => props.segments[currentSegment.value] || {}
-);
 
 const currentSeatMapRaw = computed(
   () => props.seatsMapInfo[currentSegmentInfo.value.segmentID] || null
@@ -104,13 +111,12 @@ const currentSeatMap = computed(() => {
   const raw = currentSeatMapRaw.value;
   if (!raw) return [];
 
-  return (raw.seatMap || raw).filter(seat => seat.type === "PREFERRED");
+  return (raw.seatMap || raw).filter((seat) => seat.type === "PREFERRED");
 });
 
 const isFooterDisabled = computed(() => {
   return isAssigningSeat.value;
 });
-
 
 const corporateSeatCode = computed(
   () => currentSegmentInfo.value?.seats?.[0]?.seatCode || null
@@ -118,12 +124,12 @@ const corporateSeatCode = computed(
 
 const hasCorporateSeatInMap = computed(() => {
   if (!corporateSeatCode.value || !currentSeatMap.value.length) return false;
-  return currentSeatMap.value.some(s => s.seatCode === corporateSeatCode.value);
+  return currentSeatMap.value.some(
+    (s) => s.seatCode === corporateSeatCode.value
+  );
 });
 
-const newSeatExists = computed(
-  () => !!currentSegmentInfo.value?.newSeat
-);
+const newSeatExists = computed(() => !!currentSegmentInfo.value?.newSeat);
 
 const initialHadAnySeat = computed(
   () => initialHasAnySeatByIndex[currentSegment.value] ?? false
@@ -132,32 +138,6 @@ const initialHadAnySeat = computed(
 const isCorporateSegment = computed(() => {
   const s = currentSegmentInfo.value ?? {};
   return Boolean(s.clid || s.isCorporate || s.corporate);
-});
-
-const canSave = computed(() => {
-  if (isCorporateSegment.value && !initialHadAnySeat.value) {
-
-    
-    return agreeTermsForCurrentSegment.value;
-  }
-  if (newSeatExists.value) {
-
-    return agreeTermsForCurrentSegment.value;
-  }
-  if (newSeatExists.value && initialHadAnySeat.value) {
-
-    return true;
-  }
- 
-});
-
-const segmentCount = computed(
-  () => `${currentSegment.value + 1} ${props.trads.label_of} ${props.segments.length}`
-);
-
-const initials = computed(() => {
-  const p = props.passenger || {};
-  return p.firstName && p.lastName ? p.firstName[0] + p.lastName[0] : "";
 });
 
 const isCurrentSegmentAssigned = computed(() => {
@@ -188,6 +168,9 @@ const setStageNameBySeatTypeAndStatus = (segment) => {
   } else {
     setStageName("");
   }
+
+  console.log(stageName);
+  console.log(currentModalStage);
 };
 
 const initModalStates = (segments = []) => {
@@ -220,20 +203,75 @@ const assignSeat = async () => {
       const newMap = await corporatePriorityService.getSeatMap(seatMapPayload);
 
       props.segments.forEach((seg) => {
-      if (seg.newSeat) {
-        assignedSegments.value.add(seg.segmentID);
-      }
-    });
+        if (seg.newSeat) {
+          assignedSegments.value.add(seg.segmentID);
+        }
+      });
+      assignedSeatForCurrentSegment.value = true;
+
+      console.log("ASsign", corporatePriorityService.reservation);
+      const { pnr, passenger, numberTicket } =
+        corporatePriorityService.reservation;
+
+      const reservation = await getTicketStatus({
+        pnr,
+        lastname: passenger.lastName,
+        numberTicket,
+      });
+
+      console.log("ASsign 2", corporatePriorityService.reservation);
 
       emit("updateSeatMap", currentSegmentInfo.value, newMap);
-      assignedSeatForCurrentSegment.value = true;
+      emit("updateReservation", reservation);
       setStageName("success");
-      
     }
   } finally {
     isAssigningSeat.value = false;
   }
 };
+
+watchEffect(() => {
+  modalLabel.value = hasCorporateSeatInMap.value
+    ? props.trads.label_seat_is_preferent
+    : props.trads.label_seat_no_preferent;
+});
+
+const segmentCount = computed(
+  () =>
+    `${currentSegment.value + 1} ${props.trads.label_of} ${
+      props.segments.length
+    }`
+);
+const initials = computed(() => {
+  const p = props.passenger || {};
+  return p.firstName && p.lastName ? p.firstName[0] + p.lastName[0] : "";
+});
+
+const canSave = computed(() => {
+  if (isCorporateSegment.value && !initialHadAnySeat.value) {
+    return agreeTermsForCurrentSegment.value;
+  }
+  if (newSeatExists.value) {
+    return agreeTermsForCurrentSegment.value;
+  }
+  if (newSeatExists.value && initialHadAnySeat.value) {
+    return true;
+  }
+
+  return !!currentSegmentInfo.value?.agreeTerms;
+});
+
+watch(props.segments, () => {
+  console.log(props.segments);
+});
+
+watch(
+  () => props.segments,
+  (list) => {
+    initModalStates(list || []);
+  },
+  { immediate: true }
+);
 
 const condonateSeats = async () => {
   saveLoader.value = true;
@@ -243,25 +281,52 @@ const condonateSeats = async () => {
     const response = await corporatePriorityService.condonate();
     if (response.message !== "Booking processed successfully") return;
 
-    const { pnr, passenger, numberTicket } = corporatePriorityService.reservation;
+    console.log("Condonation", corporatePriorityService.reservation);
+
+    const { pnr, passenger, numberTicket } =
+      corporatePriorityService.reservation;
+
+    console.log("Condonation 2", corporatePriorityService.reservation);
+
     const reservation = await getTicketStatus({
       pnr,
       lastname: passenger.lastName,
       numberTicket,
     });
 
-    const { segments } =
-      await corporatePriorityService.getAllSeatMaps(reservation);
+    const { segments } = await corporatePriorityService.getAllSeatMaps(
+      reservation
+    );
 
-    corporatePriorityService.downloadPDF(segments);
+    const casePayload = corporatePriorityService.prepareCasePayload();
+
+    await corporatePriorityService.createCase(casePayload);
+
+    corporatePriorityService.preparePdfDownloadPayload(segments);
     emit("updateReservation", reservation);
     emit("close");
+    emit("openToast", true, { variant: "success" });
+  } catch (err) {
+    const payload = corporatePriorityService.prepareCasePayload({
+      case: {
+        status: "Escalado",
+      },
+    });
+    const caseRegistered = await corporatePriorityService.createCase(payload);
+    console.log(caseRegistered);
+
+    const caseNumber = caseRegistered.CaseNumber;
+
+    emit("openToast", true, {
+      variant: "error",
+      stage: "BOOKING_CONDONATION_UNSUCCESFULLY",
+      text: `No es posible otorgar de momento el beneficio, contacta a tu centro de atención telefónica con el número de caso ${caseNumber}.`,
+    });
   } finally {
     isProcessingCondonation.value = false;
     saveLoader.value = false;
   }
 };
-
 
 /* ======================================================
  * 7️⃣ Watchers
@@ -269,17 +334,39 @@ const condonateSeats = async () => {
 watch(() => props.segments, initAgreeTerms, { immediate: true });
 watch(() => props.segments, initSeatAssigned, { immediate: true });
 
-watch(agreeTermsBySegment, () => {
-  props.segments.forEach((s, i) => (s.agreeTerms = agreeTermsBySegment[i]));
-}, { deep: true });
+watch(
+  agreeTermsBySegment,
+  () => {
+    props.segments.forEach((s, i) => (s.agreeTerms = agreeTermsBySegment[i]));
+  },
+  { deep: true }
+);
 
-watch(seatAssignedBySegment, () => {
-  props.segments.forEach((s, i) => (s.seatAsigned = seatAssignedBySegment[i]));
-}, { deep: true });
+watch(
+  seatAssignedBySegment,
+  () => {
+    props.segments.forEach(
+      (s, i) => (s.seatAsigned = seatAssignedBySegment[i])
+    );
+  },
+  { deep: true }
+);
 
 watch(currentSegmentInfo, (segment) => {
   setStageNameBySeatTypeAndStatus(segment);
   corporatePriorityService.currentSegment = { ...segment };
+
+  const { isAnySeatAvailable } = corporatePriorityService;
+
+  if (!isAnySeatAvailable(currentSeatMap.value)) {
+    emit("openToast", true, {
+      variant: "error",
+      stage: "NO_SEATS_AVAILABLES",
+    });
+    const payload = corporatePriorityService.prepareCasePayload();
+    corporatePriorityService.createCase(payload);
+    return;
+  }
 });
 
 watch(() => props.segments, initModalStates, { immediate: true });
@@ -290,33 +377,53 @@ watchEffect(() => {
     : props.trads.label_seat_no_preferent;
 });
 
-
 /* ======================================================
  * 8️⃣ Lifecycle
  * ==================================================== */
-onMounted(() => {
+onMounted(async () => {
+  const currentSegment = { ...currentSegmentInfo.value };
+
+  const { isAnySeatAvailable } = corporatePriorityService;
+
+  if (!isAnySeatAvailable(currentSeatMap.value)) {
+    emit("openToast", true, {
+      variant: "error",
+      stage: "NO_SEATS_AVAILABLES",
+    });
+    const payload = corporatePriorityService.prepareCasePayload();
+
+    corporatePriorityService.createCase(payload);
+    return;
+  }
+
   corporatePriorityService.reservationSeatMap = { ...props.seatsMapInfo };
   corporatePriorityService.currentSegment = { ...currentSegmentInfo.value };
+
+  console.log(corporatePriorityService.reservation);
+
+  const corporate = corporatePriorityService.reservation.corporate;
+  const stationNumber = corporatePriorityService.reservation.stationNumber;
   corporatePriorityService.reservation = {
     ...props.formPayload,
     passenger: props.passenger,
     isStandBy: props.isStandBy,
+    corporate,
+    stationNumber,
   };
 
-  setStageNameBySeatTypeAndStatus(currentSegmentInfo.value);
+  console.log(corporatePriorityService.reservation);
+
+  setStageNameBySeatTypeAndStatus(currentSegment);
 });
-
 </script>
-
 
 <template>
   <section
     class="w-screen bg-[#F2F8FC] items-center grid md:grid-cols-[400px_1fr] lg:grid-cols-2 grid-rows-[1fr_auto]"
   >
-
-      <Overlay :isOpen="saveLoader" class="absolute z-[200]">
-        <LoaderSpinner size="150" />
-      </Overlay>
+    <Overlay :isOpen="saveLoader" class="fixed z-[500]">
+      <LoaderSpinner size="150" />
+    </Overlay>
     <div
       class="relative w-full h-full flex justify-center md:justify-end gap-5 px-5 row-start-1 row-end-3 col-start-1"
     >
@@ -348,7 +455,7 @@ onMounted(() => {
         class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[90] flex flex-col items-center justify-center"
       >
         <InfoSeatModal
-          v-if="!assignedSeatForCurrentSegment && (stageName === 'condonate')"
+          v-if="!assignedSeatForCurrentSegment && stageName === 'condonate'"
           @close="setStageName('')"
           class="z-50 flex flex-col gap-[15px]"
           :title="currentModalStage.title"
@@ -389,7 +496,10 @@ onMounted(() => {
         </InfoSeatModal>
 
         <InfoSeatModal
-          v-if="!assignedSeatForCurrentSegment && (stageName === 'preferent' || stageName === 'noPreferent')"
+          v-if="
+            !assignedSeatForCurrentSegment &&
+            (stageName === 'preferent' || stageName === 'noPreferent')
+          "
           @close="setStageName('')"
           class="z-50 flex flex-col gap-[15px] w-full"
           :title="currentModalStage.title"
@@ -404,15 +514,17 @@ onMounted(() => {
             <div class="flex flex-col gap-4">
               <LinkButton
                 class="w-full"
-                @click="$emit('close', false, currentSegmentInfo)"
+                @click="currentModalStage.backButton.action"
                 >{{ trads.label_back }}</LinkButton
               >
               <Button
                 @click="assignSeat"
                 width="full"
-                :disabled="!agreeTermsForCurrentSegment || !isChangedSeat || isAssigningSeat"
-
-
+                :disabled="
+                  !agreeTermsForCurrentSegment ||
+                  !isChangedSeat ||
+                  isAssigningSeat
+                "
               >
                 <div
                   v-if="isAssigningSeat"
