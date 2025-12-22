@@ -7,6 +7,7 @@ import {
   EmptyStateIllustration,
   NotificationBar,
   Button,
+  LinkButton,
   SeatsTicket,
   GeneralToast,
   BaseModal,
@@ -46,7 +47,7 @@ const ticketForm = ref({
   numberTicket: "",
   lastname: "",
 });
-const isIataValidationOpen = ref(true);
+const isIataValidationOpen = ref(false);
 const openOneTime = ref(false);
 const isChatOpen = ref(false);
 const user = usePage().props?.auth?.user;
@@ -60,9 +61,11 @@ const chatData = ref({
   error: "",
 });
 const amPNR = ref();
+const isErrorModalOpen = ref(false)
 
 const toggleIATAValidate = () => {
   isIataValidationOpen.value = !isIataValidationOpen.value;
+  isErrorModalOpen.value = false
 };
 
 const activeChat = () => {
@@ -490,7 +493,10 @@ const openToast = (value, attrs = {}) => {
     ...attrs,
     isOpen: value,
   };
-
+  if (attrs.variant = "error") {
+    chatData.error = attrs.text;
+    isErrorModalOpen = true;
+  }
   console.log(toast.value);
 };
 
@@ -526,8 +532,8 @@ const dowloadPdf = async () => {
       {{ toast.text }}
     </p>
   </GeneralToast>
-  <BaseModal :is-open="true" class="z-[1000]">
-    <div class="flex flex-col gap-[15px] items-center "">
+  <BaseModal :is-open="isErrorModalOpen" class="z-[1000]">
+    <div class="flex flex-col gap-[15px] items-center ">
       <LocalIcon name="ErrorSeat" />
       <h2 class="text-[18px] text-center">Error</h2>
       <p class="text-sm leading-5 text-center">
@@ -535,10 +541,10 @@ const dowloadPdf = async () => {
         GSS para su atención inmediata deseas abrir un caso en el chat
       </p>
       <p class="text-center text-sm">
-        Contactar con <a href="" class="underline">Global Sales Support</a>
+        Contactar con <LinkButton @click="toggleIATAValidate">Global Sales Support</LinkButton>
       </p>
     </div>
-    <Button size="xl" width="full">Confirmar</Button>
+    <Button size="xl" width="full" @click="toggleIATAValidate">Confirmar</Button>
   </BaseModal>
   <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
     <ToolWrapper
