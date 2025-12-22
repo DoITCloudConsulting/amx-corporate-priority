@@ -495,7 +495,7 @@ const openToast = (value, attrs = {}) => {
   };
   if (attrs.variant = "error") {
     chatData.error = attrs.text;
-    isErrorModalOpen = true;
+    isErrorModalOpen.value = true;
   }
   console.log(toast.value);
 };
