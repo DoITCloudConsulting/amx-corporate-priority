@@ -94,7 +94,10 @@ class CorporatePriorityService {
   }
 
   findSeat(segmentID, seatCode, map = null) {
-    return (map ?? this.reservationSeatMap)[segmentID].seatMap.find(
+    const seatsMap = map ?? this.reservationSeatMap;
+
+    console.log(seatsMap);
+    return (seatsMap[segmentID]?.seatMap || seatsMap).find(
       (seat) => seat.seatCode === seatCode
     );
   }

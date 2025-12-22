@@ -23,7 +23,7 @@ const isOpen = ref(true);
 </script>
 
 <template>
-  <div class="flex flex-col gap-5 max-w-[280px] md:max-w-full md:w-full">
+  <div class="flex flex-col z-0 gap-5 max-w-[280px] md:max-w-full md:w-full">
     <article class="h-fit rounded-sm bg-white border">
       <header
         class="w-full p-5 flex justify-center bg-amGreen/10 border-b relative"

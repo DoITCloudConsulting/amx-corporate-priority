@@ -61,11 +61,14 @@ const chatData = ref({
   error: "",
 });
 const amPNR = ref();
-const isErrorModalOpen = ref(false)
+const errorModal = ref({
+  isOpen: false,
+  stage: "",
+});
 
 const toggleIATAValidate = () => {
   isIataValidationOpen.value = !isIataValidationOpen.value;
-  isErrorModalOpen.value = false
+  openErrorModal(false);
 };
 
 const activeChat = () => {
@@ -212,6 +215,26 @@ const trads = {
   label_change_success: getTranslation(
     "tools.corporate-priority.change-success"
   ),
+  label_invalid_iata: getTranslation("common.tools.invalid-iata"),
+  label_contact_gss_1: getTranslation("tools.corporate-priority.contact-gss-1"),
+  label_contact_gss_2: getTranslation("tools.corporate-priority.contact-gss-2"),
+  label_error: getTranslation("common.tools.error"),
+  label_not_possible_grant_benefit: getTranslation(
+    "tools.corporate-priority.not-possible-grant-benefit"
+  ),
+  label_benefit_granted: getTranslation(
+    "tools.corporate-priority.successful-benefit"
+  ),
+  label_download_pdf: getTranslation("common.tools.download-pdf"),
+  label_preferred_seat_not_available: getTranslation(
+    "tools.corporate-priority.segment.not-seats"
+  ),
+  label_seat_map_title: getTranslation(
+    "tools.corporate-priority.seat_map_title"
+  ),
+  label_seat_map_description: getTranslation(
+    "tools.corporate-priority.seat_map_description"
+  ),
 };
 
 const alert = (message) => {
@@ -236,9 +259,8 @@ const sendForm = async () => {
     const iatas = await corporatePriorityService.getIatas();
 
     if (!iatas.includes(res.stationNumber)) {
-      return console.log("Invalid profile");
-    } else {
-      console.log("Valid profile");
+      openErrorModal(true, { stage: "INVALID-IATA" });
+      return;
     }
 
     corporatePriorityService.reservation = {
@@ -349,6 +371,8 @@ const ensureSeatMap = async (seg) => {
     seatMapPayload = payload;
     const { data } = await axios.post(route("get-seat-map"), seatMapPayload);
 
+    console.log("MapResponse ", data);
+
     seatMapCache[key] = data;
     seatMapStatus[key] = "ready";
   } catch (e) {
@@ -412,8 +436,6 @@ const handleCloseMap = (showToast, segment) => {
     handleToggle(segment, false);
   }
 };
-
-onMounted(() => {});
 
 const readyCount = computed(
   () =>
@@ -493,16 +515,25 @@ const openToast = (value, attrs = {}) => {
     ...attrs,
     isOpen: value,
   };
-  if (attrs.variant = "error") {
-    chatData.error = attrs.text;
-    isErrorModalOpen.value = true;
-  }
+
   console.log(toast.value);
 };
 
 const dowloadPdf = async () => {
   await corporatePriorityService.downloadPDF();
   openToast(false);
+};
+
+const openErrorModal = (value, attrs = {}) => {
+  if (attrs?.stage === "CHAT") {
+    chatData.error = attrs.text;
+  }
+
+  errorModal.value = {
+    ...errorModal.value,
+    ...attrs,
+    isOpen: value,
+  };
 };
 </script>
 
@@ -513,9 +544,9 @@ const dowloadPdf = async () => {
     variant="success"
   >
     <p v-if="toast.variant === 'success'" class="text-white">
-      El beneficio de Corporate Priority se otorgó de forma exitosa.
+      {{ trads.label_benefit_granted }}
       <button @click="dowloadPdf" type="button" class="text-white underline">
-        Descargar el PDF
+        {{ trads.label_download_pdf }}
       </button>
     </p>
   </GeneralToast>
@@ -525,26 +556,69 @@ const dowloadPdf = async () => {
     variant="error"
   >
     <p v-if="toast.stage === 'NO_SEATS_AVAILABLES'" class="">
-      El segmento seleccionado no cuenta con asientos preferentes disponibles
-      para otorgar el beneficio.
-    </p>
-    <p v-if="toast.stage === 'BOOKING_CONDONATION_UNSUCCESFULLY'" class="">
-      {{ toast.text }}
+      {{ trads.label_preferred_seat_not_available }}
     </p>
   </GeneralToast>
-  <BaseModal :is-open="isErrorModalOpen" class="z-[1000]">
-    <div class="flex flex-col gap-[15px] items-center ">
-      <LocalIcon name="ErrorSeat" />
-      <h2 class="text-[18px] text-center">Error</h2>
-      <p class="text-sm leading-5 text-center">
-        Tu reservación tiene segmentos sin asientos, es necesario contactar a
-        GSS para su atención inmediata deseas abrir un caso en el chat
-      </p>
-      <p class="text-center text-sm">
-        Contactar con <LinkButton @click="toggleIATAValidate">Global Sales Support</LinkButton>
-      </p>
+  <BaseModal :is-open="errorModal.isOpen" class="z-[1000]">
+    <div v-if="errorModal.stage === 'CHAT'" class="w-full">
+      <div class="flex flex-col gap-[15px] items-center">
+        <LocalIcon name="ErrorSeat" />
+        <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
+        <p class="text-sm leading-5 text-center">
+          {{ trads.label_contact_gss_1 }}
+        </p>
+        <p class="text-center text-sm">
+          {{ trads.label_contact_gss_2 }}
+
+          <!-- This label will never change that is why it wasn't translated -->
+          <LinkButton @click="toggleIATAValidate"
+            >Global Sales Support</LinkButton
+          >
+        </p>
+      </div>
+      <Button
+        size="xl"
+        width="full"
+        class="mt-[25px]"
+        @click="toggleIATAValidate"
+        >{{ trads.label_confirm }}</Button
+      >
     </div>
-    <Button size="xl" width="full" @click="toggleIATAValidate">Confirmar</Button>
+    <div v-if="errorModal.stage === 'INVALID-IATA'" class="w-full">
+      <div class="flex flex-col gap-[15px] items-center">
+        <LocalIcon name="ErrorSeat" />
+        <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
+        <p class="text-sm leading-5 text-center">
+          {{ trads.label_invalid_iata }}
+        </p>
+      </div>
+      <Button
+        size="xl"
+        width="full"
+        class="mt-[25px]"
+        @click="() => openErrorModal(false)"
+        >{{ trads.label_confirm }}</Button
+      >
+    </div>
+    <div
+      v-if="errorModal.stage === 'BOOKING_CONDONATION_UNSUCCESFULLY'"
+      class="w-full"
+    >
+      <div class="flex flex-col gap-[15px] items-center">
+        <LocalIcon name="ErrorSeat" />
+        <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
+        <p class="text-sm leading-5 text-center">
+          {{ trads.label_not_possible_grant_benefit }} {{ errorModal.text }}
+        </p>
+      </div>
+      <Button
+        size="xl"
+        width="full"
+        class="mt-[25px]"
+        @click="() => openErrorModal(false)"
+        >{{ trads.label_confirm }}</Button
+      >
+    </div>
   </BaseModal>
   <section v-if="step !== 'seatsMap'" class="text-[#0B2343]">
     <ToolWrapper
@@ -719,6 +793,7 @@ const dowloadPdf = async () => {
       @updateReservation="updateReservation"
       :isChangedSeat="isChangedSeat"
       @open-toast="openToast"
+      @open-error-modal="openErrorModal"
     />
   </Transition>
 
@@ -731,6 +806,7 @@ const dowloadPdf = async () => {
       :isTool="true"
     ></Chat>
   </DialogRoot>
+
   <ChatWidget
     v-if="isChatOpen"
     :viata="chatData.iata"

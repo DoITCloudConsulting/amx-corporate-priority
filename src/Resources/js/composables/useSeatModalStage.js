@@ -31,7 +31,11 @@ export const useSeatModalStage = ({ trads, close }) => {
       stageProps: {
         backButton: {
           action: async () => {
-            const payload = corporatePriorityService.prepareCasePayload();
+            const payload = corporatePriorityService.prepareCasePayload({
+              case: {
+                status: "Cancelado",
+              },
+            });
             close();
             await corporatePriorityService.createCase(payload);
           },
@@ -45,7 +49,11 @@ export const useSeatModalStage = ({ trads, close }) => {
       stageProps: {
         backButton: {
           action: async () => {
-            const payload = corporatePriorityService.prepareCasePayload();
+            const payload = corporatePriorityService.prepareCasePayload({
+              case: {
+                status: "Cancelado",
+              },
+            });
             close();
             await corporatePriorityService.createCase(payload);
           },

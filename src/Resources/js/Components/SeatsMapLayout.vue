@@ -39,6 +39,7 @@ const emit = defineEmits([
   "updateSeatMap",
   "updateReservation",
   "openToast",
+  "openErrorModal",
 ]);
 
 const aircraftType = {
@@ -111,6 +112,8 @@ const currentSeatMapRaw = computed(
 const currentSeatMap = computed(() => {
   const raw = currentSeatMapRaw.value;
   if (!raw) return [];
+
+  console.log(raw);
 
   return (raw.seatMap || raw).filter((seat) => seat.type === "PREFERRED");
 });
@@ -283,14 +286,11 @@ const condonateSeats = async () => {
     isProcessingCondonation.value = true;
 
     const response = await corporatePriorityService.condonate();
-    if (response.message !== "Booking processed successfully") return;
-
-    console.log("Condonation", corporatePriorityService.reservation);
+    if (response.message !== "Booking processed successfully")
+      throw "No se pudo realizar la condonación correctamente";
 
     const { pnr, passenger, numberTicket } =
       corporatePriorityService.reservation;
-
-    console.log("Condonation 2", corporatePriorityService.reservation);
 
     const reservation = await getTicketStatus({
       pnr,
@@ -298,9 +298,34 @@ const condonateSeats = async () => {
       numberTicket,
     });
 
-    const { segments } = await corporatePriorityService.getAllSeatMaps(
-      reservation
-    );
+    const { segments, seatMapsBySegmentId } =
+      await corporatePriorityService.getAllSeatMaps(reservation);
+
+    console.log(segments);
+
+    segments.forEach((segment) => {
+      console.log(segment);
+      if (segment.seats.length) {
+        const segmentId = segment.segmentID;
+        // Seat from segment
+        const seat = segment.seats[0];
+        // Seat from seat map
+        const mapSeat = corporatePriorityService.findSeat(
+          segmentId,
+          seat.seatCode,
+          seatMapsBySegmentId
+        );
+
+        console.log(mapSeat);
+        console.log(seat);
+
+        if (mapSeat.type === "PREFERRED" && seat.status !== "PAID") {
+          throw "No se pudo realizar la condonación correctamente";
+        } else {
+          console.log("Todos los asientos fueron condonados correctamente");
+        }
+      }
+    });
 
     const casePayload = corporatePriorityService.prepareCasePayload();
 
@@ -311,20 +336,20 @@ const condonateSeats = async () => {
     emit("close");
     emit("openToast", true, { variant: "success" });
   } catch (err) {
+    console.log(err.message);
+
     const payload = corporatePriorityService.prepareCasePayload({
       case: {
         status: "Escalado",
       },
     });
     const caseRegistered = await corporatePriorityService.createCase(payload);
-    console.log(caseRegistered);
 
     const caseNumber = caseRegistered.CaseNumber;
 
-    emit("openToast", true, {
-      variant: "error",
-      stage: "BOOKING_CONDONATION_UNSUCCESFULLY",
-      text: `No es posible otorgar de momento el beneficio, contacta a tu centro de atención telefónica con el número de caso ${caseNumber}.`,
+    emit("openErrorModal", true, {
+      stage: "CHAT",
+      text: `${props.trads.label_not_possible_grant_benefit} ${caseNumber}.`,
     });
   } finally {
     isProcessingCondonation.value = false;
@@ -398,7 +423,11 @@ onMounted(async () => {
       variant: "error",
       stage: "NO_SEATS_AVAILABLES",
     });
-    const payload = corporatePriorityService.prepareCasePayload();
+    const payload = corporatePriorityService.prepareCasePayload({
+      case: {
+        status: "Cancelado",
+      },
+    });
 
     corporatePriorityService.createCase(payload);
     return;
@@ -427,7 +456,7 @@ onMounted(async () => {
 
 <template>
   <section
-    class="w-screen bg-[#F2F8FC] items-center grid md:grid-cols-[400px_1fr] lg:grid-cols-2 grid-rows-[1fr_auto]"
+    class="w-full bg-[#F2F8FC] items-center grid md:grid-cols-[400px_1fr] lg:grid-cols-2 grid-rows-[1fr_auto]"
   >
     <Overlay :isOpen="saveLoader" class="fixed z-[500]">
       <LoaderSpinner size="150" />
@@ -436,6 +465,8 @@ onMounted(async () => {
       class="relative w-full h-full flex justify-center md:justify-end gap-5 px-5 row-start-1 row-end-3 col-start-1"
     >
       <SeatsMap
+        :title="trads.label_seat_map_title"
+        :subtitle="trads.label_seat_map_description"
         :initials="initials"
         :data="currentSeatMap"
         @select="handleSelectSeat"
@@ -449,7 +480,7 @@ onMounted(async () => {
     >
       <div class="hidden md:flex flex-col w-[280px] md:w-full mb-5">
         <p class="mb-3 font-GarnettSemibold text-sm text-amDarkGray">
-          Vuelo AM
+          {{ trads.label_am_flight }}
         </p>
         <SeatModal
           class="hidden sm:flex"
@@ -460,7 +491,7 @@ onMounted(async () => {
 
       <div
         v-if="stageName && (!isMobile || hasSelectedSeat)"
-        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[90] flex flex-col items-center justify-center"
+        class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[50] md:z-0 flex flex-col items-center justify-center"
       >
         <InfoSeatModal
           v-if="!assignedSeatForCurrentSegment && stageName === 'condonate'"
@@ -473,12 +504,12 @@ onMounted(async () => {
 
             <div class="flex flex-col lg:flex-row gap-[25px] justify-center">
               <Button
-                @click="$emit('close', false, currentSegmentInfo)"
+                @click="emit('close', false, currentSegmentInfo)"
                 size="lg"
-                variant="secondary"
+                variant="outline"
+                color="blue"
                 width="full"
                 :disabled="isAssigningSeat"
-                class="w-full px-5 text-sm border rounded font-GarnettSemibold border-amBlueInnovation"
               >
                 {{ currentModalStage.secondaryButton.text }}
               </Button>
@@ -552,7 +583,7 @@ onMounted(async () => {
         <InfoSeatModal
           v-if="stageName === 'success' || assignedSeatForCurrentSegment"
           @close="setStageName('')"
-          class="z-50 flex flex-col gap-[15px] w-full"
+          class="flex flex-col gap-[15px] w-full"
           :title="trads.label_seats"
         >
           <div class="p-6 md:p-8 flex flex-col gap-6">

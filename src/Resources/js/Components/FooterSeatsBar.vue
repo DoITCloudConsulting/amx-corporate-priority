@@ -73,7 +73,7 @@ const handleSave = () => {
 <template>
   <div
     id="desktop"
-    class="hidden sm:flex bottom-0 justify-center min-h-20 flex-col z-[100] col-start-1 row-start-2"
+    class="hidden sm:flex bottom-0 justify-center min-h-20 flex-col z-[9] row-start-2 col-start-1 col-end-3"
   >
     <Transition name="collapse-desktop">
       <div
@@ -143,7 +143,7 @@ const handleSave = () => {
             <button
               v-if="segment.legCode === currentSegment.legCode"
               class="border rounded-full p-2 hover:scale-110"
-              @click="() => $emit('delete', segment)"
+              @click="() => emit('delete', segment)"
             >
               <Icon name="Close" color="#035CF7" size="10" />
             </button>
@@ -153,7 +153,7 @@ const handleSave = () => {
     </Transition>
 
     <div
-      class="w-screen h-20 justify-evenly lg:justify-center flex items-center gap-1 lg:gap-8 px-5 xl:px-20 bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]"
+      class="w-full h-20 justify-evenly lg:justify-center flex items-center gap-1 lg:gap-8 px-5 xl:px-20 bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]"
     >
       <div class="hidden md:block lg:text-lg">
         <p>{{ segmentCount }}</p>
@@ -211,19 +211,27 @@ const handleSave = () => {
           />
         </button>
       </div>
-      <div class="border-l">
+      <div class="border-l flex">
         <LinkButton
           variant="primary"
-          :class="`${
-            !props.canSave ? 'text-gray-600' : 'text-amBlueInnovation'
-          } px-5 text-sm`"
+          :class="[
+            `px-5 text-sm min-w-max`,
+            {
+              'text-gray-600': !props.canSave,
+              'text-amBlueInnovation': props.canSave,
+            },
+          ]"
           :disabled="!props.canSave"
           @click="handleSave"
-          >{{ trads.label_save }}</LinkButton
         >
+          <span class="text-[11px] w-max">
+            {{ trads.label_save }}
+          </span>
+        </LinkButton>
         <Button
           @click="$emit('selectSegment', currentSegmentIndex + 1)"
           variant="primary"
+          width="full"
           :disabled="
             segments.length == 1 ||
             !isAssigned ||
@@ -358,7 +366,11 @@ const handleSave = () => {
       <Button
         @click="$emit('selectSegment', currentSegmentIndex + 1)"
         class="max-w-40"
-        :disabled="segments.length == 1 || (!isAssigned || currentSegmentIndex+1 == segments.length)"
+        :disabled="
+          segments.length == 1 ||
+          !isAssigned ||
+          currentSegmentIndex + 1 == segments.length
+        "
       >
         {{ trads.label_next }}
       </Button>
