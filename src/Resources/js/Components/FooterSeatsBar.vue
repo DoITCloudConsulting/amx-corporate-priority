@@ -358,7 +358,7 @@ const handleSave = () => {
       <Button
         @click="$emit('selectSegment', currentSegmentIndex + 1)"
         class="max-w-40"
-        :disabled="segments.length == 1 || !isAssigned"
+        :disabled="segments.length == 1 || (!isAssigned || currentSegmentIndex+1 == segments.length)"
       >
         {{ trads.label_next }}
       </Button>

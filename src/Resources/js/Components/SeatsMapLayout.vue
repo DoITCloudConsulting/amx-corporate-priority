@@ -77,6 +77,7 @@ const assignedSegments = ref(new Set());
 const currentSegmentInfo = computed(
   () => props.segments[currentSegment.value] || {}
 );
+const hasSelectedSeat = ref(false);
 
 /* ======================================================
  * 5️⃣ Composables
@@ -144,6 +145,8 @@ const isCurrentSegmentAssigned = computed(() => {
   return assignedSegments.value.has(currentSegmentInfo.value.segmentID);
 });
 
+const isMobile = computed(() => window.innerWidth < 768);
+
 /* ======================================================
  * 9️⃣ Handlers
  * ==================================================== */
@@ -186,6 +189,7 @@ const handleSelect = (index) => {
 
 const handleSelectSeat = (seat) => {
   if (!seat) return;
+  hasSelectedSeat.value = true;
   emit("addSeat", seat, currentSegment.value);
 };
 
@@ -371,6 +375,10 @@ watch(currentSegmentInfo, (segment) => {
 
 watch(() => props.segments, initModalStates, { immediate: true });
 
+watch(currentSegment, () => {
+  hasSelectedSeat.value = false;
+});
+
 watchEffect(() => {
   modalLabel.value = hasCorporateSeatInMap.value
     ? props.trads.label_seat_is_preferent
@@ -451,7 +459,7 @@ onMounted(async () => {
       </div>
 
       <div
-        v-if="stageName"
+        v-if="stageName && (!isMobile || hasSelectedSeat)"
         class="fixed md:relative bg-black bg-opacity-50 md:bg-transparent left-0 top-0 w-full h-screen md:h-auto z-[90] flex flex-col items-center justify-center"
       >
         <InfoSeatModal
