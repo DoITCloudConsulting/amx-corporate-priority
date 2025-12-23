@@ -20,6 +20,7 @@ const emit = defineEmits(["select"]);
 
 const source = computed(() => {
   const raw = props.data;
+  console.log("RAW ", raw);
   if (raw) {
     return raw.map((s) => ({
       ...s,
@@ -84,6 +85,7 @@ const templateColumns = computed(() =>
 
 const rows = computed(() => {
   const grouped = new Map();
+  console.log(source.value);
   for (const s of source.value) {
     if (!allowed.value.has(s.type)) continue;
     const r = Number(s.row) || 0;

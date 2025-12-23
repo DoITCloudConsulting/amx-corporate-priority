@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "am-ui-package": "^3.0.3",
-    "axios": "^1.12.2"
+    "am-ui-package": "^3.0.5",
+    "axios": "^1.12.2",
+    "js-cookie": "^3.0.5",
+    "radix-vue": "^1.9.17"
   }
 }

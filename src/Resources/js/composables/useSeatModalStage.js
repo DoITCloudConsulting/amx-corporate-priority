@@ -1,18 +1,17 @@
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
+import { corporatePriorityService } from "../../services/CorporatePriorityService";
 
-export const useSeatModalStage = ({ trads }) => {
+export const useSeatModalStage = ({ trads, close }) => {
   const stageName = ref("");
 
   const setStageName = (newStage) => (stageName.value = newStage);
 
-  onMounted(() => {
-    // setStageName("condonate");
-  });
-
   const createStage = ({ stageProps = {}, t }) => ({
     title: t.title ?? trads.label_seats,
     mainText: t.mainText,
-    backButton: true,
+    backButton: {
+      action: () => close(),
+    },
     checkbox: {
       agreeTerms: false,
       text: trads.label_agree_terms,
@@ -29,10 +28,36 @@ export const useSeatModalStage = ({ trads }) => {
       t: {
         mainText: trads.label_seat_is_preferent,
       },
+      stageProps: {
+        backButton: {
+          action: async () => {
+            const payload = corporatePriorityService.prepareCasePayload({
+              case: {
+                status: "Cancelado",
+              },
+            });
+            close();
+            await corporatePriorityService.createCase(payload);
+          },
+        },
+      },
     }),
     noPreferent: createStage({
       t: {
         mainText: trads.label_seat_no_preferent,
+      },
+      stageProps: {
+        backButton: {
+          action: async () => {
+            const payload = corporatePriorityService.prepareCasePayload({
+              case: {
+                status: "Cancelado",
+              },
+            });
+            close();
+            await corporatePriorityService.createCase(payload);
+          },
+        },
       },
     }),
     condonate: createStage({
@@ -60,10 +85,11 @@ export const useSeatModalStage = ({ trads }) => {
     }),
   };
 
+  console.log(stages);
+
   const current = ref({});
 
   watch(stageName, (newValue) => {
-    console.log(newValue);
     if (stages[newValue] === undefined) {
       console.warn("⚙️ Usa un stageName correcto en useSeatModalStage");
       current.value = {};
@@ -71,8 +97,6 @@ export const useSeatModalStage = ({ trads }) => {
     }
 
     current.value = stages[newValue];
-
-    console.log(current.value);
   });
 
   return { stageName, setStageName, current };
