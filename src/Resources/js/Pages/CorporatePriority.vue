@@ -536,6 +536,7 @@ const openToast = (value, attrs = {}) => {
 const dowloadPdf = async () => {
   await corporatePriorityService.downloadPDF();
   openToast(false);
+  window.location.reload();
 };
 
 const openErrorModal = (value, attrs = {}) => {

@@ -66,7 +66,7 @@ class CorporatePriorityService {
       const { data } = await axios.post(route("get-seat-map"), payload);
 
       // fire tracker success
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-seat-map",
         params: {
           pnr: this.reservation.pnr,
@@ -79,12 +79,13 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.seat-map.success",
         msg_type: "success",
         lang: "en",
+        type: "success",
       });
 
       return data;
     } catch (error) {
       // track error
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-seat-map",
         params: {
           pnr: this.reservation.pnr,
@@ -97,6 +98,7 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.seat-map.error",
         msg_type: "error",
         lang: "en",
+        type: "error",
       });
 
       throw error;
@@ -137,6 +139,7 @@ class CorporatePriorityService {
                 "templates.tools.corporate-priority.all-seat-maps.error",
               msg_type: "error",
               lang: "en",
+              type: "error",
             });
             throw e;
           }
@@ -145,12 +148,13 @@ class CorporatePriorityService {
     }
 
     // if everything ok, fire success tracker
-    await this.trackerActivity.track({
+    this.trackerActivity.track({
       name: "corporate-priority-all-seat-maps",
       params: { pnr: reservation.pnr, result: "success" },
       template: "templates.tools.corporate-priority.all-seat-maps.success",
       msg_type: "success",
       lang: "en",
+      type: "success",
     });
 
     return { seatMapsBySegmentId, segments };
@@ -233,7 +237,7 @@ class CorporatePriorityService {
     try {
       const response = await axios.post(route("assign-seat"), payload);
 
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-assign-seat",
         params: {
           pnr: payload?.reservationCode,
@@ -246,11 +250,12 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.assign-seat.success",
         msg_type: "success",
         lang: "en",
+        type: "success",
       });
 
       return response;
     } catch (error) {
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-assign-seat",
         params: {
           pnr: payload?.reservationCode,
@@ -263,6 +268,7 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.assign-seat.error",
         msg_type: "error",
         lang: "en",
+        type: "error",
       });
 
       throw error;
@@ -290,11 +296,12 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.condonate.success",
         msg_type: "success",
         lang: "en",
+        type: "success",
       });
 
       return data;
     } catch (error) {
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-condonate",
         params: {
           pnr: this.reservation.pnr,
@@ -305,6 +312,7 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.condonate.error",
         msg_type: "error",
         lang: "en",
+        type: "error",
       });
 
       throw error;
@@ -376,7 +384,7 @@ class CorporatePriorityService {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-download-pdf",
         params: {
           pnr: this.pdfDownloadPayload.reservation,
@@ -386,9 +394,10 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.download-pdf.success",
         msg_type: "success",
         lang: "en",
+        type: "success",
       });
     } catch (error) {
-      await this.trackerActivity.track({
+      this.trackerActivity.track({
         name: "corporate-priority-download-pdf",
         params: {
           pnr: this.pdfDownloadPayload?.reservation,
@@ -398,62 +407,147 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.download-pdf.error",
         msg_type: "error",
         lang: "en",
+        type: "error",
       });
 
       throw error;
     }
   }
 
-  prepareCasePayload(data = {}) {
-    const { lastName, firstName, nameId } = this.reservation.passenger;
+  async prepareCasePayload(data = {}) {
+    try {
+      const { lastName, firstName, nameId } = this.reservation.passenger;
+      const user = usePage().props?.auth?.user;
+      const segment = this.currentSegment;
 
-    console.log(this.currentSegment);
-    console.log(this.reservation);
-    console.log(usePage().props.auth.user);
-    const user = usePage().props?.auth?.user;
-    const segment = this.currentSegment;
-
-    const caseData = {
-      concept: "CORPORATE PRIORITY",
-      subconcept: "ASIENTOS PREFERENTES",
-      typeGSS: "Waivers Standard",
-      description: "description",
-      priority: "Medium",
-      status: "Confirmado",
-      firstNameRequest: user.first_name,
-      lastNameRequest: user.last_name,
-      iata: this.reservation.stationNumber,
-      recordId: "",
-      iataSolicitante: user.iata,
-      waiver: null,
-      ...data?.case,
-    };
-
-    return {
-      booking: {
-        flight: this.currentSegment.flightNumber,
-        route: `${segment.startLocation} - ${segment.endLocation}`,
-        bookinIata: this.reservation.stationNumber,
-        flightDate: segment.departureDateTime,
-        name: this.reservation.pnr,
+      const caseData = {
+        concept: "CORPORATE PRIORITY",
+        subconcept: "ASIENTOS PREFERENTES",
+        typeGSS: "Waivers Standard",
+        description: "description",
+        priority: "Medium",
+        status: "Confirmado",
+        firstNameRequest: user.first_name,
+        lastNameRequest: user.last_name,
+        iata: this.reservation.stationNumber,
         recordId: "",
-      },
-      passenger: {
-        firstName: firstName,
-        lastName: lastName,
-        NumberPassengers: nameId,
-        name: `${firstName} ${lastName}`,
-        totalPassengers: 1,
-        recordId: "",
-      },
-      case: caseData,
-    };
+        iataSolicitante: user.iata,
+        waiver: null,
+        ...data?.case,
+      };
+
+      return {
+        booking: {
+          flight: this.currentSegment.flightNumber,
+          route: `${segment.startLocation} - ${segment.endLocation}`,
+          bookinIata: this.reservation.stationNumber,
+          flightDate: segment.departureDateTime,
+          name: this.reservation.pnr,
+          recordId: "",
+        },
+        passenger: {
+          firstName: firstName,
+          lastName: lastName,
+          NumberPassengers: nameId,
+          name: `${firstName} ${lastName}`,
+          totalPassengers: 1,
+          recordId: "",
+        },
+        case: caseData,
+      };
+    } catch (error) {
+      this.trackerActivity.track({
+        name: "prepare-case-payload",
+        params: {
+          pnr: this.pdfDownloadPayload?.reservation,
+
+          result: "error",
+        },
+        template:
+          "templates.tools.corporate-priority.prepare-case-payload.error",
+        msg_type: "error",
+        lang: "en",
+        type: "error",
+      });
+      return {};
+    }
   }
 
   async createCase(payload) {
-    const response = await axios.post(route("createCase"), payload);
+    try {
+      const response = await axios.post(route("createCase"), payload);
 
-    return response.data.data.records[0];
+      this.trackerActivity.track({
+        name: "corporate-priority-create-case",
+        params: {
+          pnr: this.pdfDownloadPayload.reservation,
+
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.create-case.success",
+        msg_type: "success",
+        lang: "en",
+        type: "success",
+      });
+      return response.data.data.records[0];
+    } catch (error) {
+      this.trackerActivity.track({
+        name: "corporate-priority-create-case",
+        params: {
+          pnr: this.pdfDownloadPayload?.reservation,
+          fileName: this.pdfDownloadPayload?.fileName,
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.create-case.error",
+        msg_type: "error",
+        lang: "en",
+        type: "error",
+      });
+
+      return null;
+    }
+  }
+
+  async storeTrakerActivity() {
+    const user = usePage().props?.auth?.user;
+    await axios
+      .post(
+        route("ta-creation"),
+        {
+          id_user: user.id,
+          from: "heroku",
+          description: `Page: /corporate-priority > GET: /dev/preferred/process/booking > [${this.reservation.pnr}, ${this.reservation.numberTicket}, ${this.reservation.passenger.lastName}]`,
+          tipo: "Tools",
+          subtipo: "Corporate Priority",
+          PNR: this.reservation.pnr,
+          Ticket: this.reservation.numberTicket,
+          Apellido: this.reservation.passenger.lastName,
+          noVuelo: this.currentSegment.flightNumber,
+          resgreso: this.currentSegment.endLocation,
+          iata: this.reservation.stationNumber,
+          dDate: this.currentSegment.arrivalDateTime
+            .slice(0, -3)
+            .replace("T", " ")
+            .replaceAll("-", "/"),
+          CCI_PAXNAME: this.reservation.passenger.lastName,
+          ticketNumber: this.reservation.numberTicket,
+          coupon: this.currentSegment.coupon,
+          first_name: this.reservation.passenger.firstName,
+          last_name: this.reservation.passenger.lastName,
+          id_agency: user.id_agency,
+          statusCase: "Confirmado",
+          agencia_emisora: this.reservation.stationNumber,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((res) => {})
+      .catch((err) => {
+        console.log(err);
+      });
   }
 }
 

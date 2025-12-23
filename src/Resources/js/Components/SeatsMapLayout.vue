@@ -327,11 +327,14 @@ const condonateSeats = async () => {
       }
     });
 
-    const casePayload = corporatePriorityService.prepareCasePayload();
+    const casePayload = await corporatePriorityService.prepareCasePayload();
+
+    console.log(casePayload);
 
     await corporatePriorityService.createCase(casePayload);
+    corporatePriorityService.storeTrakerActivity();
 
-    corporatePriorityService.preparePdfDownloadPayload(segments);
+    await corporatePriorityService.preparePdfDownloadPayload(segments);
     emit("updateReservation", reservation);
     emit("close");
     emit("openToast", true, { variant: "success" });
@@ -343,6 +346,8 @@ const condonateSeats = async () => {
         status: "Escalado",
       },
     });
+
+    console.log("case payload", payload);
     const caseRegistered = await corporatePriorityService.createCase(payload);
 
     const caseNumber = caseRegistered.CaseNumber;
