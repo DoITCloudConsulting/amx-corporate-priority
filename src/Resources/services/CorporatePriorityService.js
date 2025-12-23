@@ -8,29 +8,56 @@ class CorporatePriorityService {
   trackerActivity;
 
   async getIatas(IATA) {
-    const { iata, salesforce_group_id } = usePage().props.auth.user;
+    try {
+      const { iata, salesforce_group_id } = usePage().props.auth.user;
 
-    let securityType = "";
-    let groupId = "";
+      let securityType = "";
+      let groupId = "";
 
-    if (salesforce_group_id == null || salesforce_group_id == "") {
-      securityType = "IATA";
-      groupId = iata;
-    } else {
-      securityType = "securityGroups";
-      groupId = salesforce_group_id;
+      if (salesforce_group_id == null || salesforce_group_id == "") {
+        securityType = "IATA";
+        groupId = iata;
+      } else {
+        securityType = "securityGroups";
+        groupId = salesforce_group_id;
+      }
+      let routeStr = "";
+
+      if (securityType == "securityGroups") {
+        routeStr = "/api/IATAS/" + groupId;
+      } else {
+        routeStr = "/api/groupiatas/" + groupId;
+      }
+
+      const response = await axios.get(routeStr);
+
+      await this.trackerActivity.track({
+        name: "corporate-priority-get-iatas",
+        type: "tool.corporate-priority.get-iatas",
+        params: {
+          iata: groupId,
+          result: "success",
+        },
+        template: "templates.tools.corporate-priority.get-iatas.success",
+        msg_type: "success",
+        lang: "en",
+      });
+
+      return response.data;
+    } catch (error) {
+      await this.trackerActivity.track({
+        name: "corporate-priority-get-iatas",
+        type: "tool.corporate-priority.get-iatas",
+        params: {
+          result: "error",
+        },
+        template: "templates.tools.corporate-priority.get-iatas.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
     }
-    let routeStr = "";
-
-    if (securityType == "securityGroups") {
-      routeStr = "/api/IATAS/" + groupId;
-    } else {
-      routeStr = "/api/groupiatas/" + groupId;
-    }
-
-    const response = await axios.get(routeStr);
-
-    return response.data;
   }
 
   isAnySeatAvailable(map) {
@@ -66,8 +93,9 @@ class CorporatePriorityService {
       const { data } = await axios.post(route("get-seat-map"), payload);
 
       // fire tracker success
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-seat-map",
+        type: "tool.corporate-priority.seat-map",
         params: {
           pnr: this.reservation.pnr,
           legCode: payload?.legCode,
@@ -79,14 +107,14 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.seat-map.success",
         msg_type: "success",
         lang: "en",
-        type: "success",
       });
 
       return data;
     } catch (error) {
       // track error
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-seat-map",
+        type: "tool.corporate-priority.seat-map",
         params: {
           pnr: this.reservation.pnr,
           legCode: payload?.legCode,
@@ -98,7 +126,6 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.seat-map.error",
         msg_type: "error",
         lang: "en",
-        type: "error",
       });
 
       throw error;
@@ -130,6 +157,7 @@ class CorporatePriorityService {
             // track error for all-seat-maps
             await this.trackerActivity.track({
               name: "corporate-priority-all-seat-maps",
+              type: "tool.corporate-priority.all-seat-maps",
               params: {
                 pnr: reservation.pnr,
                 segmentId: segment.segmentID,
@@ -139,7 +167,6 @@ class CorporatePriorityService {
                 "templates.tools.corporate-priority.all-seat-maps.error",
               msg_type: "error",
               lang: "en",
-              type: "error",
             });
             throw e;
           }
@@ -148,13 +175,13 @@ class CorporatePriorityService {
     }
 
     // if everything ok, fire success tracker
-    this.trackerActivity.track({
+    await this.trackerActivity.track({
       name: "corporate-priority-all-seat-maps",
+      type: "tool.corporate-priority.all-seat-maps",
       params: { pnr: reservation.pnr, result: "success" },
       template: "templates.tools.corporate-priority.all-seat-maps.success",
       msg_type: "success",
       lang: "en",
-      type: "success",
     });
 
     return { seatMapsBySegmentId, segments };
@@ -237,8 +264,9 @@ class CorporatePriorityService {
     try {
       const response = await axios.post(route("assign-seat"), payload);
 
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-assign-seat",
+        type: "tool.corporate-priority.assign-seat",
         params: {
           pnr: payload?.reservationCode,
           ticket: payload?.ticketNumber || this.reservation.numberTicket,
@@ -250,13 +278,13 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.assign-seat.success",
         msg_type: "success",
         lang: "en",
-        type: "success",
       });
 
       return response;
     } catch (error) {
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-assign-seat",
+        type: "tool.corporate-priority.assign-seat",
         params: {
           pnr: payload?.reservationCode,
           ticket: payload?.ticketNumber || this.reservation.numberTicket,
@@ -268,7 +296,6 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.assign-seat.error",
         msg_type: "error",
         lang: "en",
-        type: "error",
       });
 
       throw error;
@@ -287,6 +314,7 @@ class CorporatePriorityService {
 
       await this.trackerActivity.track({
         name: "corporate-priority-condonate",
+        type: "tool.corporate-priority.condonate",
         params: {
           pnr: this.reservation.pnr,
           ticket: this.reservation.numberTicket,
@@ -296,13 +324,13 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.condonate.success",
         msg_type: "success",
         lang: "en",
-        type: "success",
       });
 
       return data;
     } catch (error) {
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-condonate",
+        type: "tool.corporate-priority.condonate",
         params: {
           pnr: this.reservation.pnr,
           ticket: this.reservation.numberTicket,
@@ -312,7 +340,6 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.condonate.error",
         msg_type: "error",
         lang: "en",
-        type: "error",
       });
 
       throw error;
@@ -363,9 +390,39 @@ class CorporatePriorityService {
   }
 
   async getAccountByIata(iata) {
-    const response = await axios.get(route("account.getByIata", { iata }));
+    try {
+      const response = await axios.get(route("account.getByIata", { iata }));
 
-    return response.data;
+      await this.trackerActivity.track({
+        name: "corporate-priority-get-account-by-iata",
+        type: "tool.corporate-priority.get-account-by-iata",
+        params: {
+          iata: iata,
+          result: "success",
+        },
+        template:
+          "templates.tools.corporate-priority.get-account-by-iata.success",
+        msg_type: "success",
+        lang: "en",
+      });
+
+      return response.data;
+    } catch (error) {
+      await this.trackerActivity.track({
+        name: "corporate-priority-get-account-by-iata",
+        type: "tool.corporate-priority.get-account-by-iata",
+        params: {
+          iata: iata,
+          result: "error",
+        },
+        template:
+          "templates.tools.corporate-priority.get-account-by-iata.error",
+        msg_type: "error",
+        lang: "en",
+      });
+
+      throw error;
+    }
   }
 
   async downloadPDF() {
@@ -384,8 +441,9 @@ class CorporatePriorityService {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-download-pdf",
+        type: "tool.corporate-priority.download-pdf",
         params: {
           pnr: this.pdfDownloadPayload.reservation,
           fileName: this.pdfDownloadPayload.fileName,
@@ -394,11 +452,11 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.download-pdf.success",
         msg_type: "success",
         lang: "en",
-        type: "success",
       });
     } catch (error) {
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-download-pdf",
+        type: "tool.corporate-priority.download-pdf",
         params: {
           pnr: this.pdfDownloadPayload?.reservation,
           fileName: this.pdfDownloadPayload?.fileName,
@@ -407,107 +465,91 @@ class CorporatePriorityService {
         template: "templates.tools.corporate-priority.download-pdf.error",
         msg_type: "error",
         lang: "en",
-        type: "error",
       });
 
       throw error;
     }
   }
 
-  async prepareCasePayload(data = {}) {
-    try {
-      const { lastName, firstName, nameId } = this.reservation.passenger;
-      const user = usePage().props?.auth?.user;
-      const segment = this.currentSegment;
+  prepareCasePayload(data = {}) {
+    const { lastName, firstName, nameId } = this.reservation.passenger;
 
-      const caseData = {
-        concept: "CORPORATE PRIORITY",
-        subconcept: "ASIENTOS PREFERENTES",
-        typeGSS: "Waivers Standard",
-        description: "description",
-        priority: "Medium",
-        status: "Confirmado",
-        firstNameRequest: user.first_name,
-        lastNameRequest: user.last_name,
-        iata: this.reservation.stationNumber,
+    console.log(this.currentSegment);
+    console.log(this.reservation);
+    console.log(usePage().props.auth.user);
+    const user = usePage().props?.auth?.user;
+    const segment = this.currentSegment;
+
+    const caseData = {
+      concept: "CORPORATE PRIORITY",
+      subconcept: "ASIENTOS PREFERENTES",
+      typeGSS: "Waivers Standard",
+      description: "description",
+      priority: "Medium",
+      status: "Confirmado",
+      firstNameRequest: user.first_name,
+      lastNameRequest: user.last_name,
+      iata: this.reservation.stationNumber,
+      recordId: "",
+      iataSolicitante: user.iata,
+      waiver: null,
+      ...data?.case,
+    };
+
+    return {
+      booking: {
+        flight: this.currentSegment.flightNumber,
+        route: `${segment.startLocation} - ${segment.endLocation}`,
+        bookinIata: this.reservation.stationNumber,
+        flightDate: segment.departureDateTime,
+        name: this.reservation.pnr,
         recordId: "",
-        iataSolicitante: user.iata,
-        waiver: null,
-        ...data?.case,
-      };
-
-      return {
-        booking: {
-          flight: this.currentSegment.flightNumber,
-          route: `${segment.startLocation} - ${segment.endLocation}`,
-          bookinIata: this.reservation.stationNumber,
-          flightDate: segment.departureDateTime,
-          name: this.reservation.pnr,
-          recordId: "",
-        },
-        passenger: {
-          firstName: firstName,
-          lastName: lastName,
-          NumberPassengers: nameId,
-          name: `${firstName} ${lastName}`,
-          totalPassengers: 1,
-          recordId: "",
-        },
-        case: caseData,
-      };
-    } catch (error) {
-      this.trackerActivity.track({
-        name: "prepare-case-payload",
-        params: {
-          pnr: this.pdfDownloadPayload?.reservation,
-
-          result: "error",
-        },
-        template:
-          "templates.tools.corporate-priority.prepare-case-payload.error",
-        msg_type: "error",
-        lang: "en",
-        type: "error",
-      });
-      return {};
-    }
+      },
+      passenger: {
+        firstName: firstName,
+        lastName: lastName,
+        NumberPassengers: nameId,
+        name: `${firstName} ${lastName}`,
+        totalPassengers: 1,
+        recordId: "",
+      },
+      case: caseData,
+    };
   }
 
   async createCase(payload) {
     try {
       const response = await axios.post(route("createCase"), payload);
 
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-create-case",
+        type: "tool.corporate-priority.create-case",
         params: {
-          pnr: this.pdfDownloadPayload.reservation,
-
+          pnr: this.reservation.pnr,
           result: "success",
         },
         template: "templates.tools.corporate-priority.create-case.success",
         msg_type: "success",
         lang: "en",
-        type: "success",
       });
+
       return response.data.data.records[0];
     } catch (error) {
-      this.trackerActivity.track({
+      await this.trackerActivity.track({
         name: "corporate-priority-create-case",
+        type: "tool.corporate-priority.create-case",
         params: {
-          pnr: this.pdfDownloadPayload?.reservation,
-          fileName: this.pdfDownloadPayload?.fileName,
+          pnr: this.reservation.pnr,
           result: "error",
         },
         template: "templates.tools.corporate-priority.create-case.error",
         msg_type: "error",
         lang: "en",
-        type: "error",
       });
 
-      return null;
+      throw error;
     }
   }
-
   async storeTrakerActivity() {
     const user = usePage().props?.auth?.user;
     await axios
