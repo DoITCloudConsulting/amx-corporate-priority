@@ -7,6 +7,7 @@ const props = defineProps({
   characteristics: { type: Array, default: () => [] },
   currentSegment: { type: Object, default: () => ({}) },
   colsPattern: { type: Array, default: () => [] },
+  onlyCols: { type: Array, default: [] },
   onlyType: { type: [String, Array], default: "PREFERRED" },
   title: { type: String, default: "Preferente" },
   subtitle: { type: String, default: "Ubicación prioritaria" },
@@ -135,7 +136,11 @@ function onSeatClick(seat) {
 
 <template>
   <div
-    class="relative rounded-t-full max-w-[320px] md:max-w-full w-full sm:w-[360px] md:w-[380px] border-[3.5px] bg-white p-1 h-full pt-[273px] pb-40 shadow-lg"
+    class="relative rounded-t-full max-w-[320px] md:max-w-full min-w-[320px] w-max border-[3.5px] bg-white p-1 h-full pt-[273px] pb-40 shadow-lg"
+    :class="{
+      'min-w-[320px]': onlyCols.length === 4,
+      'min-w-[380px]': onlyCols.length === 6,
+    }"
   >
     <header class="relative text-center border-t pb-10">
       <section

@@ -69,8 +69,6 @@ const errorModal = ref({
 
 const eventTracker = useEventTracker();
 
-console.log(eventTracker);
-
 corporatePriorityService.trackerActivity = eventTracker;
 
 const toggleIATAValidate = () => {
@@ -261,8 +259,6 @@ const sendForm = async () => {
       return;
     }
 
-    console.log(res);
-
     const iatas = await corporatePriorityService.getIatas();
 
     if (!iatas.includes(res.stationNumber)) {
@@ -281,8 +277,6 @@ const sendForm = async () => {
       },
       numberTicket: res.segments[0].segments[0].number,
     };
-
-    console.log(corporatePriorityService.reservation);
 
     updateReservation(res);
   } catch (err) {
@@ -373,8 +367,7 @@ const ensureSeatMap = async (seg) => {
   mapsLoading.value++;
   const key = segKey(seg);
 
-  if (seatMapStatus[key] === "loading" || seatMapStatus[key] === "ready")
-    return;
+  if (seatMapStatus[key] === "loading") return;
 
   seatMapStatus[key] = "loading";
   try {
@@ -430,6 +423,17 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
 
   const shouldUnset = curr.newSeat && curr.newSeat.seatCode === seat.seatCode;
 
+  // Unselect
+
+  console.log(seat.seatCode);
+  console.log(curr.newSeat?.seatCode);
+  if (seat?.seatCode === curr.newSeat?.seatCode) {
+    segments.value[i] = { ...curr, newSeat: undefined };
+    isChangedSeat.value = true;
+    console.log(segments.value[i]);
+    return;
+  }
+
   if (shouldUnset) {
     const { newSeat, ...rest } = curr;
     segments.value[i] = rest;
@@ -443,7 +447,7 @@ const handleSeat = (seat, currentIndexInLegsToMap) => {
 const handleCloseMap = (showToast, segment) => {
   step.value = "form";
   if (showToast) {
-    isToastOpen.value = true;
+    // isToastOpen.value = true;
   }
 
   if (segment) {
@@ -467,15 +471,22 @@ const continueLabel = computed(() => {
   return `Preparando mapas… ${readyCount.value}/${legsToMap.value.length}`;
 });
 
-const goToSeats = () => {
-  if (!canContinue.value) return;
+const goToSeats = async () => {
+  for (let index = 0; index < legsToMap.value.length; index++) {
+    const leg = legsToMap.value[index];
+    await ensureSeatMap(leg);
+  }
+  if (canContinue) {
+    step.value = "seatsMap";
+  }
+  /*  if (!canContinue.value) return;
   if (!clid.value) {
     noCorp.value = true;
     openModal.value = true;
     modalLabel.value = trads.label_no_seats_available;
   } else {
-    step.value = "seatsMap";
-  }
+   
+  } */
 };
 
 const deleteSelection = (payload) => {
@@ -520,7 +531,7 @@ function onUpdateAgreeTerms({ index, value }) {
 }
 
 watch(legsToMap, (list) => {
-  list.forEach(ensureSeatMap);
+  console.log(list);
 });
 
 const openToast = (value, attrs = {}) => {
@@ -582,7 +593,10 @@ const openErrorModal = (value, attrs = {}) => {
         <p class="text-sm leading-5 text-center">
           {{ trads.label_contact_gss_1 }}
         </p>
-        <p class="text-center text-sm">
+        <p class="text-sm text-center">
+          {{ errorModal.text }}
+        </p>
+        <p class="text-center text-sm leading-5">
           {{ trads.label_contact_gss_2 }}
 
           <!-- This label will never change that is why it wasn't translated -->
@@ -779,8 +793,8 @@ const openErrorModal = (value, attrs = {}) => {
             isLoading: mapsLoading,
             size: 'xs',
           }"
-          :disabled="!canContinue"
-          >{{ continueLabel }}</Button
+          :disabled="!legsToMap.length || mapsLoading"
+          >{{ trads.label_continue }}</Button
         >
       </div>
     </footer>

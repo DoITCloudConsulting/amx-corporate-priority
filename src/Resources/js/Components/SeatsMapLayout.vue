@@ -42,15 +42,16 @@ const emit = defineEmits([
   "openErrorModal",
 ]);
 
-const aircraftType = {
-  "79M": ["A", "B", "C", "|", "D", "E", "F"],
-  "7M9": ["A", "B", "C", "|", "D", "E", "F"],
-  "7M8": ["A", "B", "C", "|", "D", "E", "F"],
-  E90: ["A", "B", "|", "C", "D"],
-  "E-190": ["A", "B", "|", "C", "D"],
-  "7S8": ["A", "B", "|", "C", "D"],
-  789: ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
-};
+watch(
+  () => props.seatsMapInfo,
+  (mapsUpdated) => {
+    console.clear();
+    console.log("Maps updated", mapsUpdated);
+  }
+);
+
+const colsPattern = ref([]);
+const cols = ref([]);
 
 /* ======================================================
  * 4️⃣ Estado local
@@ -154,6 +155,7 @@ const isMobile = computed(() => window.innerWidth < 768);
  * 9️⃣ Handlers
  * ==================================================== */
 const setStageNameBySeatTypeAndStatus = (segment) => {
+  console.log(segment);
   if (segment?.seats?.length) {
     const seat = corporatePriorityService.findSeat(
       segment.segmentID,
@@ -161,11 +163,9 @@ const setStageNameBySeatTypeAndStatus = (segment) => {
     );
 
     if (seat.type === "PREFERRED") {
-      setStageName(
-        segment.seats[0].status === "PAID" || segment.newSeat
-          ? "preferent"
-          : "condonate"
-      );
+      if (segment.seats[0].status === "PAID") setStageName("preferent");
+      else if (segment?.newSeat?.seatCode) setStageName("condonate");
+      else if (!segment.newSeat) setStageName("");
     } else {
       setStageName("noPreferent");
     }
@@ -174,9 +174,6 @@ const setStageNameBySeatTypeAndStatus = (segment) => {
   } else {
     setStageName("");
   }
-
-  console.log(stageName);
-  console.log(currentModalStage);
 };
 
 const initModalStates = (segments = []) => {
@@ -415,15 +412,50 @@ watchEffect(() => {
     : props.trads.label_seat_no_preferent;
 });
 
+const buildColsPattern = (map) => {
+  console.clear();
+
+  const allColumns = ["A", "B", "C", "D", "F", "G", "H", "I", "J"];
+  const currentColumns = [];
+
+  const mapToConvert = map?.seatMap ?? map;
+  for (let index = 0; index < allColumns.length; index++) {
+    const nextIndex = index + 1;
+    const currentColumn = mapToConvert[index].column;
+    const nextColumn = mapToConvert[nextIndex].column;
+    currentColumns.push(allColumns[index]);
+
+    if (nextColumn === "A") {
+      break;
+    }
+  }
+
+  cols.value = [...currentColumns];
+
+  return getColsByLength(currentColumns.length);
+};
+
+const getColsByLength = (columns) => {
+  return {
+    4: ["A", "B", "|", "C", "D"],
+    6: ["A", "B", "C", "|", "D", "E", "F"],
+    9: ["A", "B", "C", "|", "D", "E", "F", "|", "G", "H", "J"],
+  }[columns];
+};
+
 /* ======================================================
  * 8️⃣ Lifecycle
  * ==================================================== */
 onMounted(async () => {
   const currentSegment = { ...currentSegmentInfo.value };
+  colsPattern.value = buildColsPattern(currentSeatMap.value);
 
+  console.log(currentSegment);
   const { isAnySeatAvailable } = corporatePriorityService;
 
   if (!isAnySeatAvailable(currentSeatMap.value)) {
+    console.clear();
+    console.log("Se esta ejecutando esto");
     emit("openToast", true, {
       variant: "error",
       stage: "NO_SEATS_AVAILABLES",
@@ -475,7 +507,8 @@ onMounted(async () => {
         :initials="initials"
         :data="currentSeatMap"
         @select="handleSelectSeat"
-        :colsPattern="aircraftType[currentSegmentInfo.aircraftType]"
+        :colsPattern="colsPattern"
+        :only-cols="cols"
         :currentSegment="currentSegmentInfo"
         :characteristics="seatsCharacteristics"
       />
@@ -553,7 +586,7 @@ onMounted(async () => {
             <CheckInput
               class="text-xs"
               :label="currentModalStage.checkbox.text"
-              v-model="agreeTermsForCurrentSegment"
+              v-model="currentModalStage.checkbox.agreeTerms"
             />
             <div class="flex flex-col gap-4">
               <LinkButton
@@ -565,8 +598,8 @@ onMounted(async () => {
                 @click="assignSeat"
                 width="full"
                 :disabled="
-                  !agreeTermsForCurrentSegment ||
-                  !isChangedSeat ||
+                  !currentModalStage.checkbox.agreeTerms ||
+                  !currentSegmentInfo.newSeat ||
                   isAssigningSeat
                 "
               >
