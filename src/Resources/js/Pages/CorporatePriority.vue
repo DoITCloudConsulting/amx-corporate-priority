@@ -72,8 +72,8 @@ const eventTracker = useEventTracker();
 corporatePriorityService.trackerActivity = eventTracker;
 
 const toggleIATAValidate = () => {
-  isIataValidationOpen.value = !isIataValidationOpen.value;
   openErrorModal(false);
+  isIataValidationOpen.value = !isIataValidationOpen.value;
 };
 
 const activeChat = () => {
@@ -253,16 +253,14 @@ const sendForm = async () => {
   notificationError.value = null;
   try {
     const res = await getTicketStatus(ticketForm.value);
+
+    if (res.validation?.type === "MODAL") {
+      openErrorModal(true, res.validation.modal);
+      return;
+    }
     if (!res?.validTicket) {
       notificationError.value =
         res?.error || "No fue posible validar el ticket.";
-      return;
-    }
-
-    const iatas = await corporatePriorityService.getIatas();
-
-    if (!iatas.includes(res.stationNumber)) {
-      openErrorModal(true, { stage: "INVALID-IATA" });
       return;
     }
 
@@ -332,7 +330,7 @@ const handleToggleAll = (val) => {
     : new Set();
 };
 
-const seatMapCache = reactive({});
+let seatMapCache = reactive({});
 const seatMapStatus = reactive({});
 let seatMapPayload = reactive({});
 
@@ -472,10 +470,39 @@ const continueLabel = computed(() => {
 });
 
 const goToSeats = async () => {
+  seatMapCache = {};
   for (let index = 0; index < legsToMap.value.length; index++) {
     const leg = legsToMap.value[index];
     await ensureSeatMap(leg);
   }
+
+  console.log(seatMapCache);
+  const { isAnySeatAvailable } = corporatePriorityService;
+
+  for (const [key, map] of Object.entries(seatMapCache)) {
+    /*   console.log(key);
+    console.log(segments);
+    console.log(legsToMap.value.find((leg) => leg.segmentID == key));
+    console.log(isAnySeatAvailable(map)); */
+
+    const leg = legsToMap.value.find((leg) => leg.segmentID == key);
+
+    if (!isAnySeatAvailable(map)) {
+      openErrorModal(true, {
+        stage: "NO_SEATS_AVAILABLE",
+        text: `${trads.label_preferred_seat_not_available} ${leg.startLocation} - ${leg.endLocation}`,
+      });
+      const payload = corporatePriorityService.prepareCasePayload({
+        case: {
+          status: "Cancelado",
+        },
+      });
+
+      corporatePriorityService.createCase(payload);
+      return;
+    }
+  }
+
   if (canContinue) {
     step.value = "seatsMap";
   }
@@ -576,15 +603,7 @@ const openErrorModal = (value, attrs = {}) => {
       </button>
     </p>
   </GeneralToast>
-  <GeneralToast
-    :is-open="toast.isOpen && toast.variant === 'error'"
-    @close="openToast(false)"
-    variant="error"
-  >
-    <p v-if="toast.stage === 'NO_SEATS_AVAILABLES'" class="">
-      {{ trads.label_preferred_seat_not_available }}
-    </p>
-  </GeneralToast>
+
   <BaseModal :is-open="errorModal.isOpen" class="z-[1000]">
     <div v-if="errorModal.stage === 'CHAT'" class="w-full">
       <div class="flex flex-col gap-[15px] items-center">
@@ -596,10 +615,8 @@ const openErrorModal = (value, attrs = {}) => {
         <p class="text-sm text-center">
           {{ errorModal.text }}
         </p>
+        <!-- This label will never change that is why it wasn't translated -->
         <p class="text-center text-sm leading-5">
-          {{ trads.label_contact_gss_2 }}
-
-          <!-- This label will never change that is why it wasn't translated -->
           <LinkButton @click="toggleIATAValidate"
             >Global Sales Support</LinkButton
           >
@@ -609,7 +626,27 @@ const openErrorModal = (value, attrs = {}) => {
         size="xl"
         width="full"
         class="mt-[25px]"
-        @click="toggleIATAValidate"
+        @click="() => openErrorModal(false)"
+        >{{ trads.label_confirm }}</Button
+      >
+    </div>
+
+    <div v-if="errorModal.stage === 'NO_SEATS_AVAILABLE'" class="w-full">
+      <div class="flex flex-col gap-[15px] items-center">
+        <LocalIcon name="ErrorSeat" />
+        <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
+        <p class="text-sm leading-5 text-center">
+          {{ trads.label_contact_gss_1 }}
+        </p>
+        <p class="text-sm text-center">
+          {{ errorModal.text }}
+        </p>
+      </div>
+      <Button
+        size="xl"
+        width="full"
+        class="mt-[25px]"
+        @click="() => openErrorModal(false)"
         >{{ trads.label_confirm }}</Button
       >
     </div>
@@ -618,7 +655,7 @@ const openErrorModal = (value, attrs = {}) => {
         <LocalIcon name="ErrorSeat" />
         <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
         <p class="text-sm leading-5 text-center">
-          {{ trads.label_invalid_iata }}
+          {{ errorModal.text }}
         </p>
       </div>
       <Button

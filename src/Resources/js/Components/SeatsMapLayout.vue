@@ -1,5 +1,13 @@
 <script setup>
-import { ref, reactive, computed, watch, watchEffect, onMounted } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  watch,
+  watchEffect,
+  onMounted,
+  onBeforeMount,
+} from "vue";
 import {
   CheckInput,
   Button,
@@ -41,14 +49,6 @@ const emit = defineEmits([
   "openToast",
   "openErrorModal",
 ]);
-
-watch(
-  () => props.seatsMapInfo,
-  (mapsUpdated) => {
-    console.clear();
-    console.log("Maps updated", mapsUpdated);
-  }
-);
 
 const colsPattern = ref([]);
 const cols = ref([]);
@@ -221,9 +221,8 @@ const assignSeat = async () => {
         pnr,
         lastname: passenger.lastName,
         numberTicket,
+        validation: false,
       });
-
-      console.log("ASsign 2", corporatePriorityService.reservation);
 
       emit("updateSeatMap", currentSegmentInfo.value, newMap);
       emit("updateReservation", reservation);
@@ -265,10 +264,6 @@ const canSave = computed(() => {
   return !!currentSegmentInfo.value?.agreeTerms;
 });
 
-watch(props.segments, () => {
-  console.log(props.segments);
-});
-
 watch(
   () => props.segments,
   (list) => {
@@ -293,6 +288,7 @@ const condonateSeats = async () => {
       pnr,
       lastname: passenger.lastName,
       numberTicket,
+      validation: false,
     });
 
     const { segments, seatMapsBySegmentId } =
@@ -313,9 +309,6 @@ const condonateSeats = async () => {
           seatMapsBySegmentId
         );
 
-        console.log(mapSeat);
-        console.log(seat);
-
         if (mapSeat.type === "PREFERRED" && seat.status !== "PAID") {
           throw "No se pudo realizar la condonación correctamente";
         } else {
@@ -324,14 +317,16 @@ const condonateSeats = async () => {
       }
     });
 
-    const casePayload = await corporatePriorityService.prepareCasePayload();
-
-    console.log(casePayload);
+    const casePayload = corporatePriorityService.prepareCasePayload();
 
     await corporatePriorityService.createCase(casePayload);
     corporatePriorityService.storeTrakerActivity();
 
+    console.log(casePayload);
+
     await corporatePriorityService.preparePdfDownloadPayload(segments);
+    console.log("pdf prepared");
+
     emit("updateReservation", reservation);
     emit("close");
     emit("openToast", true, { variant: "success" });
@@ -344,15 +339,11 @@ const condonateSeats = async () => {
       },
     });
 
-    console.log("case payload", payload);
     const caseRegistered = await corporatePriorityService.createCase(payload);
 
     const caseNumber = caseRegistered.CaseNumber;
 
-    emit("openErrorModal", true, {
-      stage: "CHAT",
-      text: `${props.trads.label_not_possible_grant_benefit} ${caseNumber}.`,
-    });
+    corporatePriorityService.case.number = caseNumber;
   } finally {
     isProcessingCondonation.value = false;
     saveLoader.value = false;
@@ -364,6 +355,10 @@ const condonateSeats = async () => {
  * ==================================================== */
 watch(() => props.segments, initAgreeTerms, { immediate: true });
 watch(() => props.segments, initSeatAssigned, { immediate: true });
+
+watch(currentSeatMap, (newCurrentSeatMap) => {
+  colsPattern.value = buildColsPattern(newCurrentSeatMap);
+});
 
 watch(
   agreeTermsBySegment,
@@ -386,18 +381,6 @@ watch(
 watch(currentSegmentInfo, (segment) => {
   setStageNameBySeatTypeAndStatus(segment);
   corporatePriorityService.currentSegment = { ...segment };
-
-  const { isAnySeatAvailable } = corporatePriorityService;
-
-  if (!isAnySeatAvailable(currentSeatMap.value)) {
-    emit("openToast", true, {
-      variant: "error",
-      stage: "NO_SEATS_AVAILABLES",
-    });
-    const payload = corporatePriorityService.prepareCasePayload();
-    corporatePriorityService.createCase(payload);
-    return;
-  }
 });
 
 watch(() => props.segments, initModalStates, { immediate: true });
@@ -413,8 +396,6 @@ watchEffect(() => {
 });
 
 const buildColsPattern = (map) => {
-  console.clear();
-
   const allColumns = ["A", "B", "C", "D", "F", "G", "H", "I", "J"];
   const currentColumns = [];
 
@@ -446,34 +427,16 @@ const getColsByLength = (columns) => {
 /* ======================================================
  * 8️⃣ Lifecycle
  * ==================================================== */
+
 onMounted(async () => {
   const currentSegment = { ...currentSegmentInfo.value };
+
   colsPattern.value = buildColsPattern(currentSeatMap.value);
 
-  console.log(currentSegment);
-  const { isAnySeatAvailable } = corporatePriorityService;
-
-  if (!isAnySeatAvailable(currentSeatMap.value)) {
-    console.clear();
-    console.log("Se esta ejecutando esto");
-    emit("openToast", true, {
-      variant: "error",
-      stage: "NO_SEATS_AVAILABLES",
-    });
-    const payload = corporatePriorityService.prepareCasePayload({
-      case: {
-        status: "Cancelado",
-      },
-    });
-
-    corporatePriorityService.createCase(payload);
-    return;
-  }
-
   corporatePriorityService.reservationSeatMap = { ...props.seatsMapInfo };
-  corporatePriorityService.currentSegment = { ...currentSegmentInfo.value };
 
-  console.log(corporatePriorityService.reservation);
+  console.log(corporatePriorityService.reservationSeatMap);
+  corporatePriorityService.currentSegment = { ...currentSegmentInfo.value };
 
   const corporate = corporatePriorityService.reservation.corporate;
   const stationNumber = corporatePriorityService.reservation.stationNumber;
@@ -484,8 +447,6 @@ onMounted(async () => {
     corporate,
     stationNumber,
   };
-
-  console.log(corporatePriorityService.reservation);
 
   setStageNameBySeatTypeAndStatus(currentSegment);
 });
