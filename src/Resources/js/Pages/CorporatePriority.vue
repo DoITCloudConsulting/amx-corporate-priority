@@ -8,7 +8,6 @@ import {
   NotificationBar,
   Button,
   LinkButton,
-  SeatsTicket,
   GeneralToast,
   BaseModal,
 } from "am-ui-package";
@@ -25,6 +24,7 @@ import ChatWidget from "@/Components/Modals/Chat/ChatWidget.vue";
 import { corporatePriorityService } from "../../services/CorporatePriorityService";
 import LocalIcon from "../Components/Icons/Icon.vue";
 import { useEventTracker } from "@/composable/useEventTracker.ts";
+import SeatsTicket from "../Components/SeatsTicket.vue";
 const step = ref("panel");
 const isLoading = ref(false);
 const isFormLoading = ref(false);
@@ -306,6 +306,7 @@ const updateReservation = (reservation) => {
       legEntity: leg.legEntity,
     }))
   );
+  console.log(segments.value);
 };
 
 const selectedIds = ref(new Set());
@@ -473,6 +474,7 @@ const goToSeats = async () => {
   seatMapCache = {};
   for (let index = 0; index < legsToMap.value.length; index++) {
     const leg = legsToMap.value[index];
+
     await ensureSeatMap(leg);
   }
 
