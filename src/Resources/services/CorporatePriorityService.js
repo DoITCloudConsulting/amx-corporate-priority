@@ -6,6 +6,9 @@ class CorporatePriorityService {
   reservation = {};
   currentSegment = {};
   trackerActivity;
+  case = {
+    number: "",
+  };
 
   async getIatas(IATA) {
     try {
@@ -61,7 +64,9 @@ class CorporatePriorityService {
   }
 
   isAnySeatAvailable(map) {
-    return map.some((seat) => seat.status === "AVAILABLE");
+    return (map?.seatMap || map).some(
+      (seat) => seat.status === "AVAILABLE" && seat.type === "PREFERRED"
+    );
   }
 
   prepareSeatMapPayload() {
@@ -357,12 +362,13 @@ class CorporatePriorityService {
       const seats = segment.seats;
       if (seats.length && seats[0].status === "PAID") {
         confirmedSegments.push({
-          keyword: seats[0].seatCode,
+          keyword: seats[0]?.seatCode,
           value: `${segment.startLocation} / ${segment.endLocation}`,
         });
-      } else {
+      }
+      if (seats.length && seats[0].status !== "PAID") {
         pendingSegments.push({
-          keyword: seats[0].seatCode,
+          keyword: seats[0]?.seatCode,
           value: `${segment.startLocation} / ${segment.endLocation}`,
         });
       }

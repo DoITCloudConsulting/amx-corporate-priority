@@ -8,8 +8,24 @@ import { getTranslation } from "@shared/getTranslation";
 // import { useEventTracker } from "@/composable/useEventTracker";
 // import { useUserSessionStore } from "./useAuthUserStore";
 import axios from "axios";
+import { corporatePriorityService } from "../../services/CorporatePriorityService";
 
 async function validateResponse({ message, segments, data }, ticketForm) {
+  const iatas = await corporatePriorityService.getIatas();
+
+  console.log(data);
+
+  if (!iatas.includes(data.customPassengerSegments.stationNumber)) {
+    return {
+      success: false,
+      type: "MODAL",
+      modal: {
+        text: getTranslation("common.tools.invalid-iata"),
+        stage: "INVALID-IATA",
+      },
+    };
+  }
+
   if (!data.customPassengerSegments.clid) {
     const response = await fetchCorporateValidation({ pnr: ticketForm.pnr });
 
@@ -51,21 +67,27 @@ async function validateResponse({ message, segments, data }, ticketForm) {
   return { success: true };
 }
 
-export async function getTicketStatus(ticketData) {
+export async function getTicketStatus({
+  validation: validate = true,
+  ...ticketData
+}) {
   try {
     const data = await fetchTicketStatus(ticketData);
 
-    const { success, errorNotification } = await validateResponse(
-      {
-        message: data.benefits.benefits_error,
-        segments: data.customPassengerSegments.legs,
-        data,
-      },
-      ticketData
-    );
+    if (validate) {
+      const { success, errorNotification, ...validation } =
+        await validateResponse(
+          {
+            message: data.benefits.benefits_error,
+            segments: data.customPassengerSegments.legs,
+            data,
+          },
+          ticketData
+        );
 
-    if (!success) {
-      return { validTicket: false, error: errorNotification };
+      if (!success) {
+        return { validTicket: false, error: errorNotification, validation };
+      }
     }
 
     const ticket = {
@@ -104,7 +126,7 @@ export async function getTicketStatus(ticketData) {
 
     if (status === 404) {
       const errorNotification = getTranslation(
-        "Su clave de reservación no es candidata para obtener los beneficios de Corporate Priority."
+        "tools.corporate-priority.am-error-code-404"
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
@@ -120,6 +142,14 @@ export async function getTicketStatus(ticketData) {
     if (code === "57111304") {
       const errorNotification = getTranslation(
         "tools.baggage.error.no-flight-itinerary"
+      );
+      // await trackError(ticketData, errorNotification);
+      return { validTicket: false, error: errorNotification };
+    }
+
+    if (code === "57110331") {
+      const errorNotification = getTranslation(
+        "tools.corporate-priority.am-error-code-57110331"
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
