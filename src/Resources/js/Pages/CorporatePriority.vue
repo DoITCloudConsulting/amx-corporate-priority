@@ -240,6 +240,12 @@ const trads = {
   label_seat_map_description: getTranslation(
     "tools.corporate-priority.seat_map_description"
   ),
+  label_preferents_seats_unavailable_1: getTranslation(
+    "tools.corporate-priority.preferents_seats_unavailable_1"
+  ),
+  label_preferents_seats_unavailable_2: getTranslation(
+    "tools.corporate-priority.preferents_seats_unavailable_2"
+  ),
 };
 
 const alert = (message) => {
@@ -638,10 +644,8 @@ const openErrorModal = (value, attrs = {}) => {
         <LocalIcon name="ErrorSeat" />
         <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
         <p class="text-sm leading-5 text-center">
-          {{ trads.label_contact_gss_1 }}
-        </p>
-        <p class="text-sm text-center">
-          {{ errorModal.text }}
+          {{ trads.label_preferents_seats_unavailable_1 }}
+          {{ errorModal.text }} {{ trads.label_preferents_seats_unavailable_2 }}
         </p>
       </div>
       <Button

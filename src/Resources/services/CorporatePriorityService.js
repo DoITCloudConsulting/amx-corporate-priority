@@ -480,17 +480,15 @@ class CorporatePriorityService {
   prepareCasePayload(data = {}) {
     const { lastName, firstName, nameId } = this.reservation.passenger;
 
-    console.log(this.currentSegment);
-    console.log(this.reservation);
     console.log(usePage().props.auth.user);
     const user = usePage().props?.auth?.user;
     const segment = this.currentSegment;
 
     const caseData = {
-      concept: "CORPORATE PRIORITY",
-      subconcept: "ASIENTOS PREFERENTES",
-      typeGSS: "Waivers Standard",
-      description: "description",
+      concept: "ASIENTOS",
+      subconcept: "CORPORATE PRIORITY",
+      typeGSS: "Servicios",
+      description: "",
       priority: "Medium",
       status: "Confirmado",
       firstNameRequest: user.first_name,
