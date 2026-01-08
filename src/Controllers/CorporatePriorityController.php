@@ -93,7 +93,10 @@ class CorporatePriorityController
                 throw new Exception("Issuer account not found.", 404);
             }
 
-            $applicantAccount = (new SFAccount(['Branches__c' => $data["case"]["iataSolicitante"]]))->getByStationNumber();
+            $applicantAccount = (new SFAccount([
+                'IATA__c' => $data["case"]["iataSolicitante"],
+                'Branches__c' => $data["case"]["iataSolicitante"]
+            ]))->getByStationNumber();
 
             if (!$applicantAccount) {
                 throw new Exception("Applicant account not found.", 404);
