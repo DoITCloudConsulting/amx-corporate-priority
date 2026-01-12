@@ -116,7 +116,7 @@ export async function getTicketStatus({
     const status = error.response?.data?.body.status;
     const detail = error.response?.data?.body.detail;
 
-    if (code === "57110332") {
+    if (code === "57110332" || code === "5007") {
       const errorNotification = getTranslation(
         "common.tools.error.lastname-not-match"
       );

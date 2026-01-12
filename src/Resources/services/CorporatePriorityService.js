@@ -213,7 +213,7 @@ class CorporatePriorityService {
       : this.getCurrentSegmentSeat().seatCode;
 
     return {
-      transactionDate: "2025-12-01T15:41:51",
+      transactionDate: new Date().toISOString().slice(0, 19),
       isStandBy: this.reservation.isStandBy,
       reservationCode: this.reservation.pnr,
       ticketNumber: this.reservation.numberTicket,
