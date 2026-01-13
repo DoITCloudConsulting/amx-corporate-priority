@@ -344,6 +344,11 @@ const condonateSeats = async () => {
     const caseNumber = caseRegistered.CaseNumber;
 
     corporatePriorityService.case.number = caseNumber;
+
+    emit("openErrorModal", true, {
+      stage: "CHAT",
+      text: caseNumber,
+    });
   } finally {
     isProcessingCondonation.value = false;
     saveLoader.value = false;

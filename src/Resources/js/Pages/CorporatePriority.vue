@@ -498,7 +498,7 @@ const goToSeats = async () => {
     if (!isAnySeatAvailable(map)) {
       openErrorModal(true, {
         stage: "NO_SEATS_AVAILABLE",
-        text: `${trads.label_preferred_seat_not_available} ${leg.startLocation} - ${leg.endLocation}`,
+        text: `${leg.startLocation} - ${leg.endLocation}`,
       });
       const payload = corporatePriorityService.prepareCasePayload({
         case: {
@@ -618,7 +618,7 @@ const openErrorModal = (value, attrs = {}) => {
         <LocalIcon name="ErrorSeat" />
         <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
         <p class="text-sm leading-5 text-center">
-          {{ trads.label_contact_gss_1 }}
+          {{ trads.label_not_possible_grant_benefit }}
         </p>
         <p class="text-sm text-center">
           {{ errorModal.text }}
@@ -662,25 +662,6 @@ const openErrorModal = (value, attrs = {}) => {
         <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
         <p class="text-sm leading-5 text-center">
           {{ errorModal.text }}
-        </p>
-      </div>
-      <Button
-        size="xl"
-        width="full"
-        class="mt-[25px]"
-        @click="() => openErrorModal(false)"
-        >{{ trads.label_confirm }}</Button
-      >
-    </div>
-    <div
-      v-if="errorModal.stage === 'BOOKING_CONDONATION_UNSUCCESFULLY'"
-      class="w-full"
-    >
-      <div class="flex flex-col gap-[15px] items-center">
-        <LocalIcon name="ErrorSeat" />
-        <h2 class="text-[18px] text-center">{{ trads.label_error }}</h2>
-        <p class="text-sm leading-5 text-center">
-          {{ trads.label_not_possible_grant_benefit }} {{ errorModal.text }}
         </p>
       </div>
       <Button
