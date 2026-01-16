@@ -34,7 +34,7 @@ async function validateResponse({ message, segments, data }, ticketForm) {
       !response?.message?.includes("Complete SPID AM")
     ) {
       const errorNotification = getTranslation(
-        "common.tools.error.pnr.not-corporate"
+        "common.tools.error.pnr.not-corporate",
       );
       // await trackError(ticketForm, errorNotification);
       return { success: false, errorNotification };
@@ -43,7 +43,7 @@ async function validateResponse({ message, segments, data }, ticketForm) {
 
   if (message === "PNR not found, code: 100123, severity: MODERATE") {
     const errorNotification = getTranslation(
-      "common.tools.error.pnr.invalid-key"
+      "common.tools.error.pnr.invalid-key",
     );
     // await trackError(ticketForm, errorNotification);
     return { success: false, errorNotification };
@@ -51,7 +51,7 @@ async function validateResponse({ message, segments, data }, ticketForm) {
 
   if (!segments || !segments.length) {
     const errorNotification = getTranslation(
-      "common.tools.error.lastname-not-match"
+      "common.tools.error.lastname-not-match",
     );
     // await trackError(ticketForm, errorNotification);
     return { success: false, errorNotification };
@@ -82,7 +82,7 @@ export async function getTicketStatus({
             segments: data.customPassengerSegments.legs,
             data,
           },
-          ticketData
+          ticketData,
         );
 
       if (!success) {
@@ -118,7 +118,7 @@ export async function getTicketStatus({
 
     if (code === "57110332" || code === "5007") {
       const errorNotification = getTranslation(
-        "common.tools.error.lastname-not-match"
+        "common.tools.error.lastname-not-match",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
@@ -126,14 +126,14 @@ export async function getTicketStatus({
 
     if (status === 404) {
       const errorNotification = getTranslation(
-        "tools.corporate-priority.am-error-code-404"
+        "tools.corporate-priority.am-error-code-404",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
     }
     if (code === "57111303") {
       const errorNotification = getTranslation(
-        "common.tools.error.pnr.reservation-out-sync"
+        "common.tools.error.pnr.reservation-out-sync",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
@@ -141,7 +141,7 @@ export async function getTicketStatus({
 
     if (code === "57111304") {
       const errorNotification = getTranslation(
-        "tools.baggage.error.no-flight-itinerary"
+        "tools.baggage.error.no-flight-itinerary",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
@@ -149,7 +149,7 @@ export async function getTicketStatus({
 
     if (code === "57110331") {
       const errorNotification = getTranslation(
-        "tools.corporate-priority.am-error-code-57110331"
+        "tools.corporate-priority.am-error-code-57110331",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
@@ -157,7 +157,7 @@ export async function getTicketStatus({
 
     if (code === "5000") {
       const errorNotification = getTranslation(
-        "Su clave de reservación no es una clave válida en nuestro sistema."
+        "common.tools.error.pnr.invalid-key",
       );
       // await trackError(ticketData, errorNotification);
       return { validTicket: false, error: errorNotification };
