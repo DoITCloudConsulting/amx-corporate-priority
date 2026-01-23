@@ -97,7 +97,7 @@ const formatPassengerName = (p = {}) =>
 const trads = {
   label_tool_name: getTranslation("tools.corporate-priority.title"),
   label_tool_description: getTranslation(
-    "tools.corporate-priority.description"
+    "tools.corporate-priority.description",
   ),
   label_need_help: getTranslation("navbar.common.need-help"),
   label_back: getTranslation("common.tools.back"),
@@ -130,7 +130,7 @@ const trads = {
   label_no_benefit: getTranslation("common.tools.error.not-corporate"),
 
   label_no_seats_available: getTranslation(
-    "tools.corporate-priority.no-seats-available"
+    "tools.corporate-priority.no-seats-available",
   ),
 
   label_1_panel: getTranslation("tools.corporate-priority.panel-text-1"),
@@ -143,7 +143,7 @@ const trads = {
 
   label_empty_top: getTranslation("common.tools.here-related"),
   label_no_reservations: getTranslation(
-    "common.tools.no-reservations-registered"
+    "common.tools.no-reservations-registered",
   ),
   label_check_all: getTranslation("common.tools.select-all"),
   label_tickets: getTranslation("common.tools.tickets"),
@@ -156,10 +156,10 @@ const trads = {
 
   label_standard_seat: getTranslation("tools.corporate-priority.standard-seat"),
   label_priority_landing: getTranslation(
-    "tools.corporate-priority.priority-landing"
+    "tools.corporate-priority.priority-landing",
   ),
   label_priority_ubication: getTranslation(
-    "tools.corporate-priority.priority-ubication"
+    "tools.corporate-priority.priority-ubication",
   ),
 
   label_passenger: getTranslation("common.tools.passenger"),
@@ -175,41 +175,41 @@ const trads = {
 
   label_no_seat: getTranslation("tools.corporate-priority.no-seat"),
   label_select_segment: getTranslation(
-    "tools.corporate-priority.select-segment"
+    "tools.corporate-priority.select-segment",
   ),
 
   label_success_toast: getTranslation(
-    "tools.corporate-priority.success-corporate"
+    "tools.corporate-priority.success-corporate",
   ),
 
   label_invalid_pnr: getTranslation("common.tools.form-errors.invalid-pnr"),
   label_invalid_ticket_number: getTranslation(
-    "common.tools.form-errors.invalid-ticket-number"
+    "common.tools.form-errors.invalid-ticket-number",
   ),
   label_invalid_value: getTranslation("common.tools.form-errors.invalid-value"),
 
   label_condonate: getTranslation("tools.corporate-priority.condonate"),
   label_seat_condonate: getTranslation(
-    "tools.corporate-priority.seat-condonate"
+    "tools.corporate-priority.seat-condonate",
   ),
   label_seat_yes_condonate: getTranslation(
-    "tools.corporate-priority.seat-yes-condonate"
+    "tools.corporate-priority.seat-yes-condonate",
   ),
   label_seat_no_condonate: getTranslation(
-    "tools.corporate-priority.seat-no-condonate"
+    "tools.corporate-priority.seat-no-condonate",
   ),
 
   label_seat_no_preferent: getTranslation(
-    "tools.corporate-priority.seat-no-preferent"
+    "tools.corporate-priority.seat-no-preferent",
   ),
 
   //estaba mal escrito 'labl', ubicar label y corregir
   label_current_preferred: getTranslation(
-    "tools.corporate-priority.current-preferred"
+    "tools.corporate-priority.current-preferred",
   ),
 
   label_seat_is_preferent: getTranslation(
-    "tools.corporate-priority.seat-is-preferent"
+    "tools.corporate-priority.seat-is-preferent",
   ),
 
   label_price: getTranslation("tools.corporate-priority.price"),
@@ -218,33 +218,33 @@ const trads = {
   label_middle: getTranslation("tools.corporate-priority.middle"),
   label_agree_terms: getTranslation("tools.corporate-priority.agree-terms"),
   label_change_success: getTranslation(
-    "tools.corporate-priority.change-success"
+    "tools.corporate-priority.change-success",
   ),
   label_invalid_iata: getTranslation("common.tools.invalid-iata"),
   label_contact_gss_1: getTranslation("tools.corporate-priority.contact-gss-1"),
   label_contact_gss_2: getTranslation("tools.corporate-priority.contact-gss-2"),
   label_error: getTranslation("common.tools.error"),
   label_not_possible_grant_benefit: getTranslation(
-    "tools.corporate-priority.not-possible-grant-benefit"
+    "tools.corporate-priority.not-possible-grant-benefit",
   ),
   label_benefit_granted: getTranslation(
-    "tools.corporate-priority.successful-benefit"
+    "tools.corporate-priority.successful-benefit",
   ),
   label_download_pdf: getTranslation("common.tools.download-pdf"),
   label_preferred_seat_not_available: getTranslation(
-    "tools.corporate-priority.segment.not-seats"
+    "tools.corporate-priority.segment.not-seats",
   ),
   label_seat_map_title: getTranslation(
-    "tools.corporate-priority.seat_map_title"
+    "tools.corporate-priority.seat_map_title",
   ),
   label_seat_map_description: getTranslation(
-    "tools.corporate-priority.seat_map_description"
+    "tools.corporate-priority.seat_map_description",
   ),
   label_preferents_seats_unavailable_1: getTranslation(
-    "tools.corporate-priority.preferents_seats_unavailable_1"
+    "tools.corporate-priority.preferents_seats_unavailable_1",
   ),
   label_preferents_seats_unavailable_2: getTranslation(
-    "tools.corporate-priority.preferents_seats_unavailable_2"
+    "tools.corporate-priority.preferents_seats_unavailable_2",
   ),
 };
 
@@ -310,7 +310,7 @@ const updateReservation = (reservation) => {
       legCode: leg.legCode,
       legIndex: i,
       legEntity: leg.legEntity,
-    }))
+    })),
   );
   console.log(segments.value);
 };
@@ -319,7 +319,7 @@ const selectedIds = ref(new Set());
 const segKey = (s) => s?.segmentID ?? s?.segmentCode;
 
 const legsToMap = computed(() =>
-  segments.value.filter((s) => selectedIds.value.has(segKey(s)))
+  segments.value.filter((s) => selectedIds.value.has(segKey(s))),
 );
 
 const selectedIdsArr = computed(() => Array.from(selectedIds.value));
@@ -462,12 +462,12 @@ const handleCloseMap = (showToast, segment) => {
 
 const readyCount = computed(
   () =>
-    legsToMap.value.filter((s) => seatMapStatus[segKey(s)] === "ready").length
+    legsToMap.value.filter((s) => seatMapStatus[segKey(s)] === "ready").length,
 );
 
 const canContinue = computed(
   () =>
-    legsToMap.value.length > 0 && readyCount.value === legsToMap.value.length
+    legsToMap.value.length > 0 && readyCount.value === legsToMap.value.length,
 );
 
 const continueLabel = computed(() => {

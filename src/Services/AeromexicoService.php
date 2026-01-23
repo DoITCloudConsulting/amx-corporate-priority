@@ -7,28 +7,41 @@ use Amx\CorporatePriority\Mappers\SeatMapMapper;
 use App\Services\Aeromexico\TokenService;
 use GuzzleHttp\Client;
 use Ramsey\Uuid\Uuid;
+use Config;
 
 class AeromexicoService
 {
 
     protected $tokenService;
+    private string $environment;
+
 
     public function __construct(TokenService $tokenService)
     {
         $this->tokenService = $tokenService;
+        $this->environment = Config::get("app.env");
     }
 
+    public function getClient(array $config = [],)
+    {
+        $headers = [];
+
+        if ($this->environment === "production") {
+            $headers["User-Agent"] = "Aeromexico/1.0";
+        }
+
+        $config["headers"] = $headers;
+
+        return new Client(array_merge([], $config));
+    }
     public function getReservation($data)
     {
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
+        $uuid_v1 = Uuid::uuid1()->toString();
 
         $token = $this->tokenService->grantAccess();
 
-        $client = new Client();
-
-        $uuid_v1 = Uuid::uuid1()->toString();
-
-        $response = $client->get($MS_RESERVATION, [
+        $client = $this->getClient([
             "headers" => [
                 "channel" => "web",
                 "pnr" => $data["pnr"],
@@ -42,56 +55,20 @@ class AeromexicoService
             ]
         ]);
 
+
+        $response = $client->get($MS_RESERVATION);
+
         return json_decode($response->getBody()->getContents(), true);
     }
 
     public function getSeatMap($data)
     {
         $MS_SEAT_MAP = config("corporate-priority.MS_SEAT_MAP");
-
-        $token = $this->tokenService->grantAccess();
-
-        $client = new Client();
-
         $uuid_v1 = Uuid::uuid1()->toString();
-
+        $token = $this->tokenService->grantAccess();
         $payload = SeatMapMapper::request($data);
 
-
-
-        $response = $client->post($MS_SEAT_MAP, [
-            "headers" => [
-                "channel" => "web",
-                "flow" => "myb",
-                "x-transactionId" => "a8a4426e-d6de-11f0-ac41-581122872a63",
-                "store" => "mx",
-                "platform" => "web",
-                "workflow" => "ambusiness",
-                "app-client" => "ecommerce",
-                "Authorization" => "Bearer $token"
-            ],
-            "json" => $payload
-        ]);
-
-        return json_decode($response->getBody()->getContents(), true);
-    }
-
-
-    public function assignSeat($data)
-    {
-        $MS_SEAT = config("corporate-priority.MS_SEAT");
-
-        $token = $this->tokenService->grantAccess();
-
-        $client = new Client();
-
-        $uuid_v1 = Uuid::uuid1()->toString();
-
-        $payload = AssignSeatMapper::request($data);
-
-
-
-        $response = $client->post($MS_SEAT, [
+        $client = $this->getClient([
             "headers" => [
                 "channel" => "web",
                 "flow" => "myb",
@@ -105,6 +82,36 @@ class AeromexicoService
             "json" => $payload
         ]);
 
+        $response = $client->post($MS_SEAT_MAP);
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+
+    public function assignSeat($data)
+    {
+        $MS_SEAT = config("corporate-priority.MS_SEAT");
+        $uuid_v1 = Uuid::uuid1()->toString();
+        $payload = AssignSeatMapper::request($data);
+
+        $token = $this->tokenService->grantAccess();
+
+        $client = $this->getClient([
+            "headers" => [
+                "channel" => "web",
+                "flow" => "myb",
+                "x-transactionId" => $uuid_v1,
+                "store" => "mx",
+                "platform" => "web",
+                "workflow" => "ambusiness",
+                "app-client" => "ecommerce",
+                "Authorization" => "Bearer $token"
+            ],
+            "json" => $payload
+        ]);
+
+        $response = $client->post($MS_SEAT);
+
         return json_decode($response->getBody()->getContents(), true);
     }
 
@@ -114,9 +121,7 @@ class AeromexicoService
         $EKS_BASIC_TOKEN = config("corporate-priority.EKS_BASIC_TOKEN");
         $EKS_SECRET = config("corporate-priority.EKS_SECRET");
 
-        $client = new Client();
-
-        $response = $client->post($MS_EKS_CORPORATE_AUTH, [
+        $client = $this->getClient([
             "headers" => [
                 "Authorization" => $EKS_BASIC_TOKEN,
                 "Content-Type" => "application/json"
@@ -127,6 +132,8 @@ class AeromexicoService
             ]
         ]);
 
+        $response = $client->post($MS_EKS_CORPORATE_AUTH);
+
         return json_decode($response->getBody()->getContents(), true)["message"];
     }
 
@@ -136,9 +143,7 @@ class AeromexicoService
 
         $eks_token = $this->eksToken();
 
-        $client = new Client();
-
-        $response = $client->post($MS_CORPORATE_VALIDATION, [
+        $client = $this->getClient([
             "headers" => [
                 "Authorization" => "Bearer $eks_token",
                 "Content-Type" => "application/json"
@@ -148,6 +153,8 @@ class AeromexicoService
             ]
         ]);
 
+        $response = $client->post($MS_CORPORATE_VALIDATION);
+
         return json_decode($response->getBody()->getContents(), true);
     }
 
@@ -155,17 +162,16 @@ class AeromexicoService
     {
         $MS_CONDONATE_SEATS_RESERVATION = config("corporate-priority.MS_CONDONATE_SEATS_RESERVATION");
 
-        $client = new Client();
-
-        $response = $client->post($MS_CONDONATE_SEATS_RESERVATION, [
+        $client = $this->getClient([
             "headers" => [
                 "Content-Type" => "application/json"
             ],
             "json" => [
                 "rloc" => $pnr
             ]
-
         ]);
+
+        $response = $client->post($MS_CONDONATE_SEATS_RESERVATION);
 
 
         return json_decode($response->getBody()->getContents(), true);
