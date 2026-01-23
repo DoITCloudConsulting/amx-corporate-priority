@@ -24,16 +24,14 @@ class AeromexicoService
 
     public function getClient(array $config = [],)
     {
-        $headers = [];
 
         if ($this->environment === "production") {
-            $headers["User-Agent"] = "Aeromexico/1.0";
+            $config["headers"]["User-Agent"] = "AMBTAgentUser/1.0";
         }
 
-        $config["headers"] = $headers;
-
-        return new Client(array_merge([], $config));
+        return new Client($config);
     }
+
     public function getReservation($data)
     {
         $MS_RESERVATION = config("corporate-priority.MS_RESERVATION");
