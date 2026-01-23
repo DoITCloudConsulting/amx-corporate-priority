@@ -65,7 +65,7 @@ class CorporatePriorityService {
 
   isAnySeatAvailable(map) {
     return (map?.seatMap || map).some(
-      (seat) => seat.status === "AVAILABLE" && seat.type === "PREFERRED"
+      (seat) => seat.status === "AVAILABLE" && seat.type === "PREFERRED",
     );
   }
 
@@ -155,9 +155,8 @@ class CorporatePriorityService {
 
           segments.push(segment);
           try {
-            seatMapsBySegmentId[segment.segmentID] = await this.getSeatMap(
-              payload
-            );
+            seatMapsBySegmentId[segment.segmentID] =
+              await this.getSeatMap(payload);
           } catch (e) {
             // track error for all-seat-maps
             await this.trackerActivity.track({
@@ -197,7 +196,7 @@ class CorporatePriorityService {
 
     console.log(seatsMap);
     return (seatsMap[segmentID]?.seatMap || seatsMap).find(
-      (seat) => seat.seatCode === seatCode
+      (seat) => seat.seatCode === seatCode,
     );
   }
 
@@ -239,7 +238,7 @@ class CorporatePriorityService {
       segment: {
         entity: this.currentSegment.legEntity,
         remainingTimeToCheckIn: Number(
-          this.currentSegment.remainingSegmentTimeToCheckin
+          this.currentSegment.remainingSegmentTimeToCheckin,
         ),
         segmentCode: this.currentSegment.segmentCode,
         coupon: Number(this.currentSegment.coupon),
@@ -376,7 +375,7 @@ class CorporatePriorityService {
 
     console.log(this.reservation);
     const issuerAccount = await this.getAccountByIata(
-      this.reservation.stationNumber
+      this.reservation.stationNumber,
     );
 
     this.pdfDownloadPayload = {
@@ -438,7 +437,7 @@ class CorporatePriorityService {
         { ...this.pdfDownloadPayload },
         {
           responseType: "blob",
-        }
+        },
       );
       const url = window.URL.createObjectURL(response.data);
       const a = document.createElement("a");
@@ -588,7 +587,7 @@ class CorporatePriorityService {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       )
       .then((res) => {})
       .catch((err) => {
