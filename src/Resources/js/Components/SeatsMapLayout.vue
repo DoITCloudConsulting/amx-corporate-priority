@@ -77,7 +77,7 @@ const seatsCharacteristics = ref([
 const assignedSegments = ref(new Set());
 
 const currentSegmentInfo = computed(
-  () => props.segments[currentSegment.value] || {}
+  () => props.segments[currentSegment.value] || {},
 );
 const hasSelectedSeat = ref(false);
 
@@ -107,7 +107,7 @@ const {
  * ==================================================== */
 
 const currentSeatMapRaw = computed(
-  () => props.seatsMapInfo[currentSegmentInfo.value.segmentID] || null
+  () => props.seatsMapInfo[currentSegmentInfo.value.segmentID] || null,
 );
 
 const currentSeatMap = computed(() => {
@@ -124,20 +124,20 @@ const isFooterDisabled = computed(() => {
 });
 
 const corporateSeatCode = computed(
-  () => currentSegmentInfo.value?.seats?.[0]?.seatCode || null
+  () => currentSegmentInfo.value?.seats?.[0]?.seatCode || null,
 );
 
 const hasCorporateSeatInMap = computed(() => {
   if (!corporateSeatCode.value || !currentSeatMap.value.length) return false;
   return currentSeatMap.value.some(
-    (s) => s.seatCode === corporateSeatCode.value
+    (s) => s.seatCode === corporateSeatCode.value,
   );
 });
 
 const newSeatExists = computed(() => !!currentSegmentInfo.value?.newSeat);
 
 const initialHadAnySeat = computed(
-  () => initialHasAnySeatByIndex[currentSegment.value] ?? false
+  () => initialHasAnySeatByIndex[currentSegment.value] ?? false,
 );
 
 const isCorporateSegment = computed(() => {
@@ -159,13 +159,17 @@ const setStageNameBySeatTypeAndStatus = (segment) => {
   if (segment?.seats?.length) {
     const seat = corporatePriorityService.findSeat(
       segment.segmentID,
-      segment.seats[0].seatCode
+      segment.seats[0].seatCode,
     );
 
     if (seat.type === "PREFERRED") {
-      if (segment.seats[0].status === "PAID") setStageName("preferent");
+      console.clear();
+      console.log(segment.seats[0].status !== "PAID");
+      if (segment.seats[0].status === "PAID")
+        setStageName("preferent-confirmed");
+      else if (segment.seats[0].status !== "PAID") setStageName("preferent");
       else if (segment?.newSeat?.seatCode) setStageName("condonate");
-      else if (!segment.newSeat) setStageName("");
+      else if (segment.newSeat) setStageName("");
     } else {
       setStageName("noPreferent");
     }
@@ -174,6 +178,8 @@ const setStageNameBySeatTypeAndStatus = (segment) => {
   } else {
     setStageName("");
   }
+
+  console.log(stageName.value);
 };
 
 const initModalStates = (segments = []) => {
@@ -213,7 +219,6 @@ const assignSeat = async () => {
       });
       assignedSeatForCurrentSegment.value = true;
 
-      console.log("ASsign", corporatePriorityService.reservation);
       const { pnr, passenger, numberTicket } =
         corporatePriorityService.reservation;
 
@@ -243,7 +248,7 @@ const segmentCount = computed(
   () =>
     `${currentSegment.value + 1} ${props.trads.label_of} ${
       props.segments.length
-    }`
+    }`,
 );
 const initials = computed(() => {
   const p = props.passenger || {};
@@ -269,7 +274,7 @@ watch(
   (list) => {
     initModalStates(list || []);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const condonateSeats = async () => {
@@ -294,10 +299,7 @@ const condonateSeats = async () => {
     const { segments, seatMapsBySegmentId } =
       await corporatePriorityService.getAllSeatMaps(reservation);
 
-    console.log(segments);
-
     segments.forEach((segment) => {
-      console.log(segment);
       if (segment.seats.length) {
         const segmentId = segment.segmentID;
         // Seat from segment
@@ -306,7 +308,7 @@ const condonateSeats = async () => {
         const mapSeat = corporatePriorityService.findSeat(
           segmentId,
           seat.seatCode,
-          seatMapsBySegmentId
+          seatMapsBySegmentId,
         );
 
         if (mapSeat.type === "PREFERRED" && seat.status !== "PAID") {
@@ -322,10 +324,7 @@ const condonateSeats = async () => {
     await corporatePriorityService.createCase(casePayload);
     corporatePriorityService.storeTrakerActivity();
 
-    console.log(casePayload);
-
     await corporatePriorityService.preparePdfDownloadPayload(segments);
-    console.log("pdf prepared");
 
     emit("updateReservation", reservation);
     emit("close");
@@ -370,17 +369,17 @@ watch(
   () => {
     props.segments.forEach((s, i) => (s.agreeTerms = agreeTermsBySegment[i]));
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   seatAssignedBySegment,
   () => {
     props.segments.forEach(
-      (s, i) => (s.seatAsigned = seatAssignedBySegment[i])
+      (s, i) => (s.seatAsigned = seatAssignedBySegment[i]),
     );
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(currentSegmentInfo, (segment) => {
@@ -541,7 +540,9 @@ onMounted(async () => {
         <InfoSeatModal
           v-if="
             !assignedSeatForCurrentSegment &&
-            (stageName === 'preferent' || stageName === 'noPreferent')
+            (stageName === 'preferent' ||
+              stageName === 'noPreferent' ||
+              stageName === 'preferent-confirmed')
           "
           @close="setStageName('')"
           class="z-50 flex flex-col gap-[15px] w-full"

@@ -106,10 +106,6 @@ class CorporatePriorityController
             $data["case"]["agency"] = $applicantAccount->Id;
 
 
-
-            var_dump($issuerAccount->Id);
-            var_dump($applicantAccount->Id);
-
             $case = (new SFCase())->createCase($data, $issuerAccount, $applicantAccount);
 
             return response()->json([

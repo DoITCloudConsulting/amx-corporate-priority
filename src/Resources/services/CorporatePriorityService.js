@@ -373,7 +373,6 @@ class CorporatePriorityService {
       }
     });
 
-    console.log(this.reservation);
     const issuerAccount = await this.getAccountByIata(
       this.reservation.stationNumber,
     );
@@ -388,8 +387,6 @@ class CorporatePriorityService {
       confirmedSegments,
       pendingSegments,
     };
-
-    console.log(this.pdfDownloadPayload);
 
     return { ...this.pdfDownloadPayload };
   }
@@ -479,7 +476,6 @@ class CorporatePriorityService {
   prepareCasePayload(data = {}) {
     const { lastName, firstName, nameId } = this.reservation.passenger;
 
-    console.log(usePage().props.auth.user);
     const user = usePage().props?.auth?.user;
     const segment = this.currentSegment;
 
@@ -536,6 +532,7 @@ class CorporatePriorityService {
         lang: "en",
       });
 
+      console.log(response.data);
       return response.data.data.records[0];
     } catch (error) {
       await this.trackerActivity.track({

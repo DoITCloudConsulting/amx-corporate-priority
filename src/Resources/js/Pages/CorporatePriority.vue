@@ -211,7 +211,9 @@ const trads = {
   label_seat_is_preferent: getTranslation(
     "tools.corporate-priority.seat-is-preferent",
   ),
-
+  label_seat_preferent_not_confirmed: getTranslation(
+    "tools.corporate-priority.seat-preferent-not-confirmed",
+  ),
   label_price: getTranslation("tools.corporate-priority.price"),
   label_window: getTranslation("tools.corporate-priority.window"),
   label_aisle: getTranslation("tools.corporate-priority.aisle"),
