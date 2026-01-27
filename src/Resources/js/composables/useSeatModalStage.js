@@ -24,9 +24,27 @@ export const useSeatModalStage = ({ trads, close }) => {
   });
 
   const stages = {
-    preferent: createStage({
+    "preferent-confirmed": createStage({
       t: {
         mainText: trads.label_seat_is_preferent,
+      },
+      stageProps: {
+        backButton: {
+          action: async () => {
+            const payload = corporatePriorityService.prepareCasePayload({
+              case: {
+                status: "Cancelado",
+              },
+            });
+            close();
+            await corporatePriorityService.createCase(payload);
+          },
+        },
+      },
+    }),
+    preferent: createStage({
+      t: {
+        mainText: trads.label_seat_preferent_not_confirmed,
       },
       stageProps: {
         backButton: {
