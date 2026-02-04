@@ -598,6 +598,14 @@ const openErrorModal = (value, attrs = {}) => {
     isOpen: value,
   };
 };
+
+const back = () => {
+  if (step.value === "panel") {
+    location.href = "/tools";
+  } else {
+    step.value = "panel";
+  }
+};
 </script>
 
 <template>
@@ -680,11 +688,8 @@ const openErrorModal = (value, attrs = {}) => {
       class="mb-40"
       :tool="trads.label_tool_name"
       :description="trads.label_tool_description"
-      @goBack="
-        () => {
-          step = 'panel';
-        }
-      "
+      @goBack="back"
+      :goBack="getTranslation('common.back')"
       @handleNeedHelp="
         () => {
           alert('Help is on the way!');
