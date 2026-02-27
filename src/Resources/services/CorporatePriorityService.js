@@ -492,6 +492,7 @@ class CorporatePriorityService {
       recordId: "",
       iataSolicitante: user.iata,
       waiver: null,
+      applicantName: user.name
       ...data?.case,
     };
 
