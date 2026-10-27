@@ -41,7 +41,7 @@ class AeromexicoService
 
         $client = $this->getClient([
             "headers" => [
-                "channel" => "web",
+                "channel" => "doit",
                 "pnr" => $data["pnr"],
                 "lastName" => $data["lastname"],
                 "ticket" => $data["ticketNumber"],

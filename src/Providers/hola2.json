@@ -1,0 +1,46 @@
+{
+    "stationNumber": "86977181",
+    "pnr": "OQENTM",
+    "nameId": "01.01",
+    "ticketNumber": "1392162054713",
+    "isStandBy": false,
+    "firstName": "LUKA",
+    "lastName": "MORALES",
+    "type": "ADT",
+    "legs": [
+        {
+            "legCode": "GDL_MEX_2026-03-01",
+            "legRegion": "LOC",
+            "legEntity": "DOM",
+            "remainingTimeToCheckin": 12558,
+            "windowLegStatus": "MYB",
+            "segments": [
+                {
+                    "segmentCode": "GDL_MEX_AM_0201_2026-03-01_0601",
+                    "aircraftType": "7M9",
+                    "origin": "GDL",
+                    "destination": "MEX",
+                    "marketingCarrier": "AM",
+                    "operatingCarrier": "AM",
+                    "operatingFlightCode": "0201",
+                    "departureDate": "2026-03-01T06:01:00",
+                    "arrivalDate": "2026-03-01T07:35:00",
+                    "farebasis": "NLNK0QCN",
+                    "fareFamily": "MAIN_CLASSIC",
+                    "bookingClass": "N",
+                    "bookingCabin": "Y",
+                    "cabinClass": "Y",
+                    "segmentRegion": "LOC",
+                    "seats": [],
+                    "number": "1392162054713",
+                    "coupon": "1",
+                    "status": "OK",
+                    "remainingSegmentTimeToCheckin": 12558,
+                    "departureAirportTimeZoneId": "America/Mexico_City",
+                    "flightNumber": "0201",
+                    "segmentNumber": "1"
+                }
+            ]
+        }
+    ]
+}
