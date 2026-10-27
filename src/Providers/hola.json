@@ -1,0 +1,274 @@
+{
+    "customPassengerSegments": {
+        "passenger": {
+            "lastName": "MORALES",
+            "firstName": "LUKA",
+            "nameId": "01.01",
+            "type": "ADT",
+            "ffNumber": "",
+            "ffTierLevel": "",
+            "cobrandType": "",
+            "ssrs": [
+                {
+                    "id": "6",
+                    "code": "TKNE"
+                }
+            ],
+            "mealsDiscrepancy": false,
+            "meals": []
+        },
+        "clid": "",
+        "stationNumber": "86977181",
+        "reservationCode": "OQENTM",
+        "isStandBy": false,
+        "legs": [
+            {
+                "legCode": "GDL_MEX_2026-03-01",
+                "legEntity": "DOM",
+                "legRegion": "LOC",
+                "fareFamily": "MAIN_CLASSIC",
+                "windowLegStatus": "MYB",
+                "remainingTimeToCheckin": "12558",
+                "segments": [
+                    {
+                        "segmentCode": "GDL_MEX_AM_0201_2026-03-01_0601",
+                        "remainingSegmentTimeToCheckin": "12558",
+                        "departureAirportTimeZoneId": "America/Mexico_City",
+                        "segmentNumber": 1,
+                        "aircraftType": "7M9",
+                        "number": "1392162054713",
+                        "coupon": "1",
+                        "status": "OK",
+                        "previousStatus": null,
+                        "flightNumber": "0201",
+                        "departureDateTime": "2026-03-01T06:01:00",
+                        "arrivalDateTime": "2026-03-01T07:35:00",
+                        "flagDepartureDate": true,
+                        "startLocation": "GDL",
+                        "endLocation": "MEX",
+                        "operatingCarrier": "AM",
+                        "bookingClass": "N",
+                        "region": "LOC",
+                        "market": "DOMESTIC",
+                        "legType": "NON-STOP",
+                        "segmentID": "3",
+                        "farebasis": "NLNK0QCN",
+                        "fareFamily": "MAIN_CLASSIC",
+                        "bookingCabin": "Y",
+                        "cabinClass": "Y",
+                        "segmentRegion": "LOC",
+                        "marketingCarrier": "AM",
+                        "segmentStatusCode": "HK",
+                        "seats": []
+                    }
+                ]
+            }
+        ],
+        "genericSpecialRequests": []
+    },
+    "benefits": {
+        "benefits_error": "No se pudo obtener corporateAccount, bookingClass o region desde la reserva."
+    }
+}
+
+{
+    "success": false,
+    "message": "No se pudo obtener la reserva.",
+    "errorDetails": {
+        "from": "AMB-MS",
+        "errorCode": "PNR_NOT_FOUND",
+        "statusCode": 404
+    }
+}
+
+{
+    "success": false,
+    "message": "Mensaje de consulta fallida",
+    "from": "AMB-MS",
+    "errorCode": "PNR_NOT_FOUND",
+    "statusCode": 404
+}
+
+
+{
+    "success": true,
+    "message": "Reserva obtenida exitosamente.",
+    "statusCode": 200,
+    "data": {
+        "stationNumber": "86977181",
+        "pnr": "OQENTM",
+        "nameId": "01.01",
+        "ticketNumber": "1392162054713",
+        "isStandBy": false,
+        "firstName": "LUKA",
+        "lastName": "MORALES",
+        "type": "ADT",
+        "legs": [
+            {
+                "legCode": "GDL_MEX_2026-03-01",
+                "legRegion": "LOC",
+                "legEntity": "DOM",
+                "remainingTimeToCheckin": 12558,
+                "windowLegStatus": "MYB",
+                "segments": [
+                    {
+                        "segmentCode": "GDL_MEX_AM_0201_2026-03-01_0601",
+                        "aircraftType": "7M9",
+                        "origin": "GDL",
+                        "destination": "MEX",
+                        "marketingCarrier": "AM",
+                        "operatingCarrier": "AM",
+                        "operatingFlightCode": "0201",
+                        "departureDate": "2026-03-01T06:01:00",
+                        "arrivalDate": "2026-03-01T07:35:00",
+                        "farebasis": "NLNK0QCN",
+                        "fareFamily": "MAIN_CLASSIC",
+                        "bookingClass": "N",
+                        "bookingCabin": "Y",
+                        "cabinClass": "Y",
+                        "segmentRegion": "LOC",
+                        "seats": [],
+                        "number": "1392162054713",
+                        "coupon": "1",
+                        "status": "OK",
+                        "remainingSegmentTimeToCheckin": 12558,
+                        "departureAirportTimeZoneId": "America/Mexico_City",
+                        "flightNumber": "0201",
+                        "segmentNumber": "1"
+                    }
+                ]
+            }
+        ]
+    }
+}
+
+
+{
+    "pnr": "OQENTM",
+    "nameId": "01.01",
+    "segments": [
+        {
+            "bookingClass": "N",
+            "ticketNumber": "1392162054713",
+            "coupon": "1",
+            "segmentCode": "GDL_MEX_AM_0201_2026-03-01_0601",
+            "operatingCarrier": "AM",
+            "origin": "GDL",
+            "destination": "MEX",
+            "departureDate": "2026-03-01T06:01:00",
+        }
+    ]
+}
+
+{
+    "success": true,
+    "message": "Los segmentos seleccionados cumplen con los requisitos para proceder.",
+    "statusCode": 200,
+    "data": {
+        "isAllowedToProceed": true,
+        "_debug_segments": {
+            "GDL_MEX_AM_0201_2026-03-01_0601": {
+                "isStatusOk": true,
+                "isValidIssuer": true,
+                "isValidBookingClass": true,
+                "isValidSaleType": true,
+                "isValidPassengerType": true, // Evalúa infant, name changes, name, corrections etc.
+                "isValidCarrier": true, // Evalúa que sea vuelo sólido AM / no CodeShare
+                "isValidWaiverHistory": true, // Evalúa reactivaciones previas o SSRU
+                "isValidSpecialServices": true, // Evalúa UMNR, WCHR, PETC, AVIH
+                "isValidTimeframe": true, // Evalúa las 24h o 72h dinámicamente
+            }
+        }
+    }
+}
+
+{
+    "success": true,
+    "message": "Los segmentos seleccionados no cumplen con los requisitos para proceder.",
+    "statusCode": 200,
+    "data": {
+        "isAllowedToProceed": false,
+        "failedDetails": {
+            "reason": "FLAG_INFANT",
+            "segmentCode": "GDL_MEX_AM_0201_2026-03-01_0601",
+        },
+        "_debug_segments": {
+            "GDL_MEX_AM_0201_2026-03-01_0601": {
+                "isStatusOk": true,
+                "isValidIssuer": true,
+                "isValidBookingClass": true,
+                "isValidSaleType": true,
+                "isValidPassengerType": false, // Evalúa infant, name changes, name, corrections etc.
+                "isValidCarrier": null, // Evalúa que sea vuelo sólido AM / no CodeShare
+                "isValidWaiverHistory": null, // Evalúa reactivaciones previas o SSRU
+                "isValidSpecialServices": null, // Evalúa UMNR, WCHR, PETC, AVIH
+                "isValidTimeframe": null, // Evalúa las 24h o 72h dinámicamente
+            }
+        }
+    }
+}
+// Endpoint para consultar mapa de asientos de un vuelos
+// Ruta POST /api/segments/seatmap/search
+// BODY
+{
+    "pnr": "OQENTM",
+    "isStandBy": false,
+    "leg": {
+        "code": "GDL_MEX_2026-03-01",
+        "region": "LOC",
+        "windowLegStatus": "MYB",
+    },
+    "segment": {
+        "code": "GDL_MEX_AM_0201_2026-03-01_0601",
+        "aircraftType": "7M9",
+        "origin": "GDL",
+        "destination": "MEX",
+        "marketingCarrier": "AM",
+        "operatingCarrier": "AM",
+        "operatingFlightCode": "0201",
+        "departureDate": "2026-03-01T06:01:00",
+        "arrivalDate": "2026-03-01T07:35:00",
+        "farebasis": "NLNK0QCN",
+        "fareFamily": "MAIN_CLASSIC",
+        "bookingClass": "N",
+        "bookingCabin": "Y",
+        "segmentRegion": "LOC",
+    }
+}
+// SUCCESS RESPONSE
+{
+    "success": true,
+    "message": "Mapa de asientos obtenido exitosamente.",
+    "statusCode": 200,
+    "data": {
+        "origin": "GDL",
+        "destination": "MEX",
+        "flightNumber": "0201",
+        "map": [
+            {
+                "seatCode": "1A",
+                "status": "AVAILABLE",
+                "section": "AM_PLUS",
+                "row": "1",
+                "column": "A",
+                "currency": {
+                    "currencyCode": "MXN",
+                    "base": 482.0,
+                    "taxes": 78.0,
+                    "total": 560.0
+                }
+            },
+            ...
+        ]
+    }
+}
+// ERROR RESPONSE e.g.
+{
+    "success": false,
+    "message": "No se pudo obtener el mapa de asientos.",
+    "errorDetails": {
+        "from": "AMB-MS",
+        "errorCode": "EXTERNAL_SERVICE_ERROR",
+        "statusCode": 503
+    }
+}
